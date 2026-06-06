@@ -1011,7 +1011,7 @@ function FaqSection() {
     },
     {
       q: 'Como funciona o Indique e Ganhe?',
-      a: 'Cada usuário recebe um link de indicação. Quando alguém assina por meio dele, você ganha comissão e crédito direto na conta.',
+      a: 'Cada usuário recebe um link de indicação exclusivo. Quem assinar pelo seu link ganha desconto na primeira assinatura, e você recebe comissões em dinheiro por cada indicação convertida. Os ganhos ficam disponíveis para saque diretamente no painel.',
     },
     {
       q: 'Posso cancelar a qualquer momento?',
