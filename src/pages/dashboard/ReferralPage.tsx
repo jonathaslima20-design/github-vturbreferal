@@ -124,7 +124,7 @@ export default function ReferralPage() {
         <div className="text-center space-y-3 py-6">
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Indique e Ganhe</h1>
           <p className="text-muted-foreground max-w-lg mx-auto">
-            Compartilhe o VitrineTurbo e ganhe comissao por cada indicacao
+            Compartilhe o VitrineTurbo e ganhe comissões por cada indicacao
           </p>
           <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
             <Badge variant="secondary" className="text-xs sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1">
