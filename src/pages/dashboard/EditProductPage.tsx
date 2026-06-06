@@ -240,6 +240,7 @@ export default function EditProductPage() {
           url: img.url,
           isFeatured: img.is_featured,
           mediaType: 'image',
+          associatedColor: img.associated_color || null,
         }));
         setImages(mediaItems);
         setInitialImages(mediaItems);
@@ -375,7 +376,10 @@ export default function EditProductPage() {
       }
 
       if (reorderedImages.length > 0) {
-        const allCurrentImages = [...reorderedImages, ...newImages];
+        const allCurrentImages = [...reorderedImages, ...newImages].map(img => ({
+          ...img,
+          associated_color: img.associatedColor || null,
+        }));
         await updateImageOrder(id, allCurrentImages);
       }
 
@@ -882,6 +886,7 @@ export default function EditProductPage() {
                 onChange={setImages}
                 maxImages={user?.max_images_per_product || 10}
                 maxFileSize={5}
+                availableColors={form.watch('colors') || []}
               />
             </CardContent>
           </Card>

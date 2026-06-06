@@ -181,7 +181,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
           price: effectivePrice,
           discounted_price: selectedWeightVariant ? undefined : product.discounted_price,
           quantity: quantity,
-          featured_image_url: product.featured_image_url,
+          featured_image_url: (selectedColor && product.product_images?.find(
+            (img: any) => img.associated_color === selectedColor
+          )?.url) || product.featured_image_url,
           short_description: product.short_description,
           is_starting_price: product.is_starting_price,
           notes: '',

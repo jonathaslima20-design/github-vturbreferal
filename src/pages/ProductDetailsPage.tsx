@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { motion } from 'framer-motion';
 import { Share2, ArrowLeft, Loader, Package, ShoppingCart, MessageCircle, TriangleAlert as AlertTriangle } from 'lucide-react';
@@ -31,6 +31,8 @@ interface ProductDetailsPageProps {
 
 export default function ProductDetailsPage({ customDomainSlug }: ProductDetailsPageProps = {}) {
   const { slug: paramSlug, productId } = useParams();
+  const [searchParams] = useSearchParams();
+  const preselectedColor = searchParams.get('cor');
   const slug = customDomainSlug || paramSlug;
   const [product, setProduct] = useState<any | null>(null);
   const [corretor, setCorretor] = useState<any | null>(null);
@@ -248,10 +250,22 @@ export default function ProductDetailsPage({ customDomainSlug }: ProductDetailsP
       galleryMedia.push({
         id: img.id,
         url: img.url,
-        is_featured: img.is_featured, // <--- Alterado de 'false' para 'img.is_featured'
-        media_type: img.media_type || 'image'
+        is_featured: img.is_featured,
+        media_type: img.media_type || 'image',
+        associated_color: img.associated_color || null,
       });
     });
+  }
+
+  // If a color is preselected via query param, move its image to the front
+  if (preselectedColor && galleryMedia.length > 0) {
+    const colorImageIndex = galleryMedia.findIndex(
+      (img) => img.associated_color === preselectedColor
+    );
+    if (colorImageIndex > 0) {
+      const [colorImage] = galleryMedia.splice(colorImageIndex, 1);
+      galleryMedia.unshift(colorImage);
+    }
   }
 
   // Fallback to default image if no images at all
@@ -260,7 +274,8 @@ export default function ProductDetailsPage({ customDomainSlug }: ProductDetailsP
       id: 'default',
       url: "https://images.pexels.com/photos/3802510/pexels-photo-3802510.jpeg",
       is_featured: true,
-      media_type: 'image' as const
+      media_type: 'image' as const,
+      associated_color: null,
     });
   }
 

@@ -8,6 +8,7 @@ export interface UploadedImage {
   is_featured: boolean;
   media_type: 'image';
   display_order: number;
+  associated_color?: string | null;
 }
 
 export interface ImageValidationResult {
@@ -344,6 +345,7 @@ export async function updateImageOrder(
         .update({
           is_featured: isFeatured,
           display_order: i,
+          associated_color: image.associated_color || null,
         })
         .eq('id', image.id);
 
@@ -358,7 +360,7 @@ export async function fetchProductImages(productId: string): Promise<UploadedIma
   try {
     const { data, error } = await supabase
       .from('product_images')
-      .select('id, url, is_featured, media_type, display_order')
+      .select('id, url, is_featured, media_type, display_order, associated_color')
       .eq('product_id', productId)
       .order('display_order', { ascending: true });
 
@@ -371,6 +373,7 @@ export async function fetchProductImages(productId: string): Promise<UploadedIma
         is_featured: img.is_featured || false,
         media_type: img.media_type as 'image',
         display_order: img.display_order || 0,
+        associated_color: img.associated_color || null,
       })) || []
     );
   } catch (error) {

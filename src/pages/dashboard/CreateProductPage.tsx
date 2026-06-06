@@ -784,6 +784,7 @@ export default function CreateProductPage() {
                 onChange={setImages}
                 maxImages={user?.max_images_per_product || 10}
                 maxFileSize={5}
+                availableColors={form.watch('colors') || []}
               />
             </CardContent>
           </Card>

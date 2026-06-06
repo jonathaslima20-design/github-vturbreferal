@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, MessageCircle, Package, Clock, ShoppingCart, MapPin, Ticket, Wallet, Truck } from 'lucide-react';
+import { X, MessageCircle, Package, Clock, ShoppingCart, MapPin, Ticket, Wallet, Truck, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -231,9 +231,20 @@ export default function OrderDetailsPanel({
                 Itens ({items.length})
               </h4>
               <div className="space-y-3">
-                {items.map((item) => (
+                {items.map((item) => {
+                  const productUrl = user?.slug
+                    ? `/${user.slug}/produtos/${item.product_id}${item.selected_color ? `?cor=${encodeURIComponent(item.selected_color)}` : ''}`
+                    : null;
+
+                  return (
                   <div key={item.id} className="flex gap-3 p-3 border rounded-lg">
-                    <div className="w-14 h-14 rounded-md overflow-hidden bg-muted flex-shrink-0">
+                    <a
+                      href={productUrl || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`w-14 h-14 rounded-md overflow-hidden bg-muted flex-shrink-0 ${productUrl ? 'cursor-pointer ring-offset-2 hover:ring-2 hover:ring-primary/50 transition-all' : ''}`}
+                      onClick={(e) => { if (!productUrl) e.preventDefault(); }}
+                    >
                       {item.product_image_url ? (
                         <img
                           src={item.product_image_url}
@@ -245,9 +256,25 @@ export default function OrderDetailsPanel({
                           <Package className="h-5 w-5 text-muted-foreground" />
                         </div>
                       )}
-                    </div>
+                    </a>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium line-clamp-1">{item.product_title}</p>
+                      <div className="flex items-center gap-1">
+                        {productUrl ? (
+                          <a
+                            href={productUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm font-medium line-clamp-1 hover:text-primary hover:underline transition-colors"
+                          >
+                            {item.product_title}
+                          </a>
+                        ) : (
+                          <p className="text-sm font-medium line-clamp-1">{item.product_title}</p>
+                        )}
+                        {productUrl && item.selected_color && (
+                          <ExternalLink className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                        )}
+                      </div>
                       <div className="flex flex-wrap gap-1.5 mt-1">
                         {item.selected_color && (
                           <span className="text-xs text-muted-foreground">Cor: {item.selected_color}</span>
@@ -275,7 +302,8 @@ export default function OrderDetailsPanel({
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 

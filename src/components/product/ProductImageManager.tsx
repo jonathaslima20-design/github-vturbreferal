@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Upload, X, Star, Image as ImageIcon, Loader as Loader2, Scissors } from 'lucide-react';
+import { Upload, X, Star, Image as ImageIcon, Loader as Loader2, Scissors, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ImageCropperProduct } from '@/components/ui/image-cropper-product';
 import { cn } from '@/lib/utils';
@@ -7,6 +7,13 @@ import { toast } from 'sonner';
 import { validateFilesWithHash, validateFilesWithMultiLayerValidation, formatFileSize } from '@/lib/fileValidation';
 import { revokeBlobUrl, registerBlobUrl, debugBlobUrlRegistry } from '@/lib/blobUrlValidator';
 import { v4 as uuidv4 } from 'uuid';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 type MediaItem = {
   id: string;
@@ -17,6 +24,7 @@ type MediaItem = {
   fileHash?: string;
   visualFingerprint?: string;
   blobUrl?: string;
+  associatedColor?: string | null;
 };
 
 interface ProductImageManagerProps {
@@ -24,13 +32,17 @@ interface ProductImageManagerProps {
   onChange: (images: MediaItem[]) => void;
   maxImages?: number;
   maxFileSize?: number;
+  availableColors?: string[];
+  onColorAssociationChange?: (imageId: string, color: string | null) => void;
 }
 
 export function ProductImageManager({
   images,
   onChange,
   maxImages = 10,
-  maxFileSize = 5
+  maxFileSize = 5,
+  availableColors = [],
+  onColorAssociationChange,
 }: ProductImageManagerProps) {
   const [dragOver, setDragOver] = useState(false);
   const [showCropper, setShowCropper] = useState(false);
@@ -270,6 +282,14 @@ export function ProductImageManager({
     onChange(remainingImages);
   };
 
+  const handleColorAssociation = (imageId: string, color: string | null) => {
+    const updatedImages = images.map(img =>
+      img.id === imageId ? { ...img, associatedColor: color } : img
+    );
+    onChange(updatedImages);
+    onColorAssociationChange?.(imageId, color);
+  };
+
   const remainingSlots = maxImages - images.length;
   const uploadPercentage = (images.length / maxImages) * 100;
 
@@ -302,62 +322,89 @@ export function ProductImageManager({
             <h4 className="text-sm font-medium mb-3">Imagens Atuais</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {images.map((item) => (
-                <div
-                  key={item.id}
-                  className="relative group aspect-square rounded-lg overflow-hidden bg-muted border-2 transition-all"
-                >
-                  <img
-                    src={item.url}
-                    alt="Product"
-                    className="w-full h-full object-cover"
-                  />
+                <div key={item.id} className="space-y-1.5">
+                  <div
+                    className="relative group aspect-square rounded-lg overflow-hidden bg-muted border-2 transition-all"
+                  >
+                    <img
+                      src={item.url}
+                      alt="Product"
+                      className="w-full h-full object-cover"
+                    />
 
-                  <div className="absolute top-2 right-2 flex gap-2">
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant={item.isFeatured ? "default" : "secondary"}
-                      className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => setFeaturedImage(item.id)}
-                      title={item.isFeatured ? "Imagem principal" : "Definir como principal"}
-                    >
-                      <Star className={cn(
-                        "h-4 w-4",
-                        item.isFeatured && "fill-current"
-                      )} />
-                    </Button>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="secondary"
-                      className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => handleRecropImage(item)}
-                      title="Recortar imagem"
-                    >
-                      <Scissors className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="destructive"
-                      className={cn(
-                        "h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity",
-                        images.length === 1 && "opacity-50 cursor-not-allowed"
-                      )}
-                      onClick={() => removeImage(item.id)}
-                      disabled={images.length === 1}
-                      title={images.length === 1 ? "Não é possível remover - esta é a única imagem" : "Remover imagem"}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                    <div className="absolute top-2 right-2 flex gap-2">
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant={item.isFeatured ? "default" : "secondary"}
+                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => setFeaturedImage(item.id)}
+                        title={item.isFeatured ? "Imagem principal" : "Definir como principal"}
+                      >
+                        <Star className={cn(
+                          "h-4 w-4",
+                          item.isFeatured && "fill-current"
+                        )} />
+                      </Button>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="secondary"
+                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleRecropImage(item)}
+                        title="Recortar imagem"
+                      >
+                        <Scissors className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="destructive"
+                        className={cn(
+                          "h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity",
+                          images.length === 1 && "opacity-50 cursor-not-allowed"
+                        )}
+                        onClick={() => removeImage(item.id)}
+                        disabled={images.length === 1}
+                        title={images.length === 1 ? "Não é possível remover - esta é a única imagem" : "Remover imagem"}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    {item.isFeatured && (
+                      <div className="absolute bottom-2 left-2">
+                        <span className="bg-primary text-primary-foreground text-xs font-medium px-2 py-1 rounded">
+                          Principal
+                        </span>
+                      </div>
+                    )}
+
+                    {item.associatedColor && !item.isFeatured && (
+                      <div className="absolute bottom-2 left-2">
+                        <span className="bg-background/90 text-foreground text-xs font-medium px-2 py-1 rounded flex items-center gap-1">
+                          <Palette className="h-3 w-3" />
+                          {item.associatedColor}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
-                  {item.isFeatured && (
-                    <div className="absolute bottom-2 left-2">
-                      <span className="bg-primary text-primary-foreground text-xs font-medium px-2 py-1 rounded">
-                        Principal
-                      </span>
-                    </div>
+                  {availableColors.length > 0 && (
+                    <Select
+                      value={item.associatedColor || '__none__'}
+                      onValueChange={(val) => handleColorAssociation(item.id, val === '__none__' ? null : val)}
+                    >
+                      <SelectTrigger className="h-7 text-xs">
+                        <SelectValue placeholder="Associar cor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">Sem cor</SelectItem>
+                        {availableColors.map((color) => (
+                          <SelectItem key={color} value={color}>{color}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   )}
                 </div>
               ))}

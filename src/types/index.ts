@@ -113,6 +113,7 @@ export interface ProductImage {
   is_featured: boolean;
   media_type?: MediaType;
   display_order?: number;
+  associated_color?: string | null;
 }
 
 export type WeightUnitType = 'kg' | 'g' | 'ml' | 'l' | 'un' | 'cps';
