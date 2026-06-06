@@ -8,9 +8,10 @@ interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
   showText?: boolean;
   backgroundColor?: string;
+  noLink?: boolean;
 }
 
-export default function Logo({ className, size = 'md', showText = true, backgroundColor }: LogoProps) {
+export default function Logo({ className, size = 'md', showText = true, backgroundColor, noLink }: LogoProps) {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -45,19 +46,27 @@ export default function Logo({ className, size = 'md', showText = true, backgrou
     lg: 'h-14', // Was h-12
   };
 
+  const imgElement = (
+    <img
+      src={logoUrl}
+      alt="VitrineTurbo"
+      className={cn(logoSizes[size], 'w-auto')}
+      onError={(e) => {
+        const fallbackUrl = useLightVersion
+          ? 'https://ikvwygqmlqhsyqmpgaoz.supabase.co/storage/v1/object/public/public/logos/vitrinelogo-white.png.png'
+          : 'https://ikvwygqmlqhsyqmpgaoz.supabase.co/storage/v1/object/public/public/logos/vitrinelogo-black.png.png';
+        e.currentTarget.src = fallbackUrl;
+      }}
+    />
+  );
+
+  if (noLink) {
+    return <span className={cn('flex items-center', className)}>{imgElement}</span>;
+  }
+
   return (
     <Link to="/" className={cn('flex items-center', className)}>
-      <img 
-        src={logoUrl} 
-        alt="VitrineTurbo" 
-        className={cn(logoSizes[size], 'w-auto')}
-        onError={(e) => {
-          const fallbackUrl = useLightVersion
-            ? 'https://ikvwygqmlqhsyqmpgaoz.supabase.co/storage/v1/object/public/public/logos/vitrinelogo-white.png.png'
-            : 'https://ikvwygqmlqhsyqmpgaoz.supabase.co/storage/v1/object/public/public/logos/vitrinelogo-black.png.png';
-          e.currentTarget.src = fallbackUrl;
-        }}
-      />
+      {imgElement}
     </Link>
   );
 }

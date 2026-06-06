@@ -25,6 +25,7 @@ import { updateMetaTags, getCorretorMetaTags } from '@/utils/metaTags';
 import { scrollCoordinator } from '@/lib/scrollCoordinator';
 import { StorefrontThemeProvider } from '@/contexts/StorefrontThemeContext';
 import { useInventoryEnabledForStore } from '@/hooks/useInventoryEnabled';
+import { generateReferralLink } from '@/lib/referralUtils';
 
 const PromotionalBanner = lazy(() => import('@/components/corretor/PromotionalBanner'));
 
@@ -228,6 +229,17 @@ export default function CorretorPage({ customDomainSlug }: CorretorPageProps = {
       updateMetaTags(metaConfig);
     }
   }, [corretor, language]);
+
+  // ─── Footer referral link ──────────────────────────────────────────────────
+  useEffect(() => {
+    if (corretor?.referral_code) {
+      const link = generateReferralLink(corretor.referral_code);
+      document.documentElement.setAttribute('data-referral-link', link);
+    }
+    return () => {
+      document.documentElement.removeAttribute('data-referral-link');
+    };
+  }, [corretor?.referral_code]);
 
   // ─── Cleanup ─────────────────────────────────────────────────────────────────
   useEffect(() => {

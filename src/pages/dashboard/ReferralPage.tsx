@@ -20,7 +20,7 @@ import {
 import {
   Gift, Users, DollarSign, CircleCheck as CheckCircle2, TrendingUp,
   Share2, UserPlus, MousePointerClick, Crown, CreditCard, Copy,
-  CircleAlert as AlertCircle, FileText, Ticket, Wallet,
+  CircleAlert as AlertCircle, FileText, Ticket, Wallet, Store,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import PixKeyDialog from '@/components/referral/PixKeyDialog';
@@ -252,6 +252,14 @@ export default function ReferralPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Footer Logo Info */}
+      <Alert className="border-border bg-muted/50">
+        <Store className="h-4 w-4" />
+        <AlertDescription className="text-sm">
+          <strong>Dica:</strong> Seu link de indicacao tambem esta presente na logomarca VitrineTurbo no rodape do seu catalogo. Visitantes que clicarem nela serao direcionados para se cadastrar com seu codigo de indicacao automaticamente.
+        </AlertDescription>
+      </Alert>
 
       {/* Coupon Code Section */}
       <Card className="border-dashed border-2">

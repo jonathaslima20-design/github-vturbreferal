@@ -7,6 +7,7 @@ export default function Footer() {
   const [customLogoUrl, setCustomLogoUrl] = useState<string | null>(null);
   const [footerLogoMode, setFooterLogoMode] = useState<string>('default');
   const [footerLogoFormat, setFooterLogoFormat] = useState<string>('rectangular');
+  const [referralLink, setReferralLink] = useState<string | null>(null);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -21,6 +22,7 @@ export default function Footer() {
       setCustomLogoUrl(root.getAttribute('data-custom-logo-url'));
       setFooterLogoMode(root.getAttribute('data-footer-logo-mode') || 'default');
       setFooterLogoFormat(root.getAttribute('data-footer-logo-format') || 'rectangular');
+      setReferralLink(root.getAttribute('data-referral-link'));
     };
 
     readState();
@@ -28,7 +30,7 @@ export default function Footer() {
     const observer = new MutationObserver(readState);
     observer.observe(root, {
       attributes: true,
-      attributeFilter: ['class', 'style', 'data-custom-logo-url', 'data-footer-logo-mode', 'data-footer-logo-format'],
+      attributeFilter: ['class', 'style', 'data-custom-logo-url', 'data-footer-logo-mode', 'data-footer-logo-format', 'data-referral-link'],
     });
 
     return () => observer.disconnect();
@@ -50,15 +52,29 @@ export default function Footer() {
       );
     }
 
+    const logoElement = <Logo size="md" showText={false} backgroundColor={bgColor} noLink />;
+
     return (
       <>
-        <Link to="/" onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })}>
-          <Logo size="md" showText={false} backgroundColor={bgColor} />
-        </Link>
-        <div className="flex items-center gap-4 text-sm -mt-1">
-          <Link to="/login" className="text-muted-foreground hover:text-primary transition-colors">
-            Crie sua Vitrine Digital
+        {referralLink ? (
+          <a href={referralLink} target="_blank" rel="noopener noreferrer">
+            {logoElement}
+          </a>
+        ) : (
+          <Link to="/" onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })}>
+            {logoElement}
           </Link>
+        )}
+        <div className="flex items-center gap-4 text-sm -mt-1">
+          {referralLink ? (
+            <a href={referralLink} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+              Crie sua Vitrine Digital
+            </a>
+          ) : (
+            <Link to="/login" className="text-muted-foreground hover:text-primary transition-colors">
+              Crie sua Vitrine Digital
+            </Link>
+          )}
         </div>
       </>
     );

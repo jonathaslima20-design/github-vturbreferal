@@ -113,7 +113,8 @@ export function useCorretorData({ slug }: UseCorretorDataProps): UseCorretorData
             language,
             plan_status,
             billing_cycle,
-            subscription_end_date
+            subscription_end_date,
+            referral_code
           `)
           .eq('slug', slug)
           .eq('role', 'corretor')
