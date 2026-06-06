@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, MessageCircle, Package, Clock, ShoppingCart, MapPin, Ticket, Wallet, Truck, ExternalLink } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -66,6 +67,43 @@ export default function OrderDetailsPanel({
   const [inventoryDialogMode, setInventoryDialogMode] = useState<'deduct' | 'restore'>('deduct');
   const [inventoryItems, setInventoryItems] = useState<InventoryItemInfo[]>([]);
   const [pendingStatus, setPendingStatus] = useState<OrderStatus | null>(null);
+  const [colorImageMap, setColorImageMap] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!order) return;
+    const itemsWithColor = (order.order_items || []).filter(
+      (item) => item.product_id && item.selected_color
+    );
+    if (itemsWithColor.length === 0) {
+      setColorImageMap({});
+      return;
+    }
+
+    const fetchColorImages = async () => {
+      const productIds = [...new Set(itemsWithColor.map((i) => i.product_id))];
+      const { data } = await supabase
+        .from('product_images')
+        .select('product_id, url, associated_color')
+        .in('product_id', productIds)
+        .not('associated_color', 'is', null);
+
+      if (!data) return;
+
+      const map: Record<string, string> = {};
+      for (const item of itemsWithColor) {
+        const key = `${item.id}`;
+        const match = data.find(
+          (img) =>
+            img.product_id === item.product_id &&
+            img.associated_color === item.selected_color
+        );
+        if (match) map[key] = match.url;
+      }
+      setColorImageMap(map);
+    };
+
+    fetchColorImages();
+  }, [order?.id]);
 
   if (!order) return null;
 
@@ -245,9 +283,9 @@ export default function OrderDetailsPanel({
                       className={`w-14 h-14 rounded-md overflow-hidden bg-muted flex-shrink-0 ${productUrl ? 'cursor-pointer ring-offset-2 hover:ring-2 hover:ring-primary/50 transition-all' : ''}`}
                       onClick={(e) => { if (!productUrl) e.preventDefault(); }}
                     >
-                      {item.product_image_url ? (
+                      {(colorImageMap[item.id] || item.product_image_url) ? (
                         <img
-                          src={item.product_image_url}
+                          src={colorImageMap[item.id] || item.product_image_url}
                           alt={item.product_title}
                           className="w-full h-full object-cover"
                         />
