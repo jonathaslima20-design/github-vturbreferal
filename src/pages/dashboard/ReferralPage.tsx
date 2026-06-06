@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Table,
   TableBody,
@@ -21,7 +22,7 @@ import {
 import {
   Gift, Users, DollarSign, CircleCheck as CheckCircle2, TrendingUp,
   Share2, UserPlus, MousePointerClick, Crown, CreditCard, Copy,
-  CircleAlert as AlertCircle, FileText, Ticket, Wallet, Store,
+  CircleAlert as AlertCircle, FileText, Ticket, Wallet, Info, Check,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import PixKeyDialog from '@/components/referral/PixKeyDialog';
@@ -39,7 +40,7 @@ function getPlanBadge(planStatus: string) {
     case 'active':
       return <Badge>Ativo</Badge>;
     case 'free':
-      return <Badge variant="secondary">Grátis</Badge>;
+      return <Badge variant="secondary">Gratis</Badge>;
     case 'expired':
       return <Badge variant="destructive">Expirado</Badge>;
     default:
@@ -52,13 +53,17 @@ export default function ReferralPage() {
   const { stats, pixKeys, referralLink, clickCount, referredUsers, isLoading, refreshData, error } = useReferralData(user?.id);
   const [showPixDialog, setShowPixDialog] = useState(false);
   const [showWithdrawalDialog, setShowWithdrawalDialog] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   const referralCode = referralLink ? referralLink.split('ref=')[1] || '' : '';
 
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(referralLink);
-      toast.success('Link copiado para área de transferência!');
+      setCopiedLink(true);
+      toast.success('Link copiado!');
+      setTimeout(() => setCopiedLink(false), 2000);
     } catch {
       toast.error('Erro ao copiar link');
     }
@@ -67,19 +72,25 @@ export default function ReferralPage() {
   const copyCodeToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(referralCode);
-      toast.success('Código copiado!');
+      setCopiedCode(true);
+      toast.success('Codigo copiado!');
+      setTimeout(() => setCopiedCode(false), 2000);
     } catch {
-      toast.error('Erro ao copiar código');
+      toast.error('Erro ao copiar codigo');
     }
   };
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-7xl">
-        <Skeleton className="h-32 w-full" />
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} className="h-28" />
+      <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-5xl">
+        <Skeleton className="h-24 w-full rounded-xl" />
+        <div className="grid gap-4 md:grid-cols-2">
+          <Skeleton className="h-32 rounded-xl" />
+          <Skeleton className="h-32 rounded-xl" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-28 rounded-xl" />
           ))}
         </div>
       </div>
@@ -88,11 +99,11 @@ export default function ReferralPage() {
 
   if (error && !referralLink) {
     return (
-      <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-7xl">
+      <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-5xl">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            {error || 'Não foi possível gerar seu link de indicação. Por favor, recarregue a página.'}
+            {error || 'Nao foi possivel gerar seu link de indicacao. Por favor, recarregue a pagina.'}
           </AlertDescription>
         </Alert>
         <Button onClick={refreshData} className="w-full max-w-md mx-auto block">
@@ -102,383 +113,401 @@ export default function ReferralPage() {
     );
   }
 
+  const withdrawalMin = 50;
+  const available = stats?.availableForWithdrawal || 0;
+  const withdrawalProgress = Math.min((available / withdrawalMin) * 100, 100);
+
   return (
-    <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-7xl">
-      {/* Header Section */}
-      <div className="text-center space-y-4 py-8">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-foreground mb-4">
-          <Gift className="h-8 w-8 text-background" />
-        </div>
-        <h1 className="text-4xl font-bold">Indique e Ganhe</h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Compartilhe o VitrineTurbo e ganhe <span className="font-bold text-foreground">30% de comissão</span> por cada indicação que ativar um plano. Seu indicado ganha <span className="font-bold text-foreground">20% de desconto</span>!
-        </p>
-      </div>
-
-      {/* How it Works Section - 4 steps */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertCircle className="h-5 w-5" />
-            Como Funciona
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="text-center space-y-3">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-foreground">
-                <Share2 className="h-6 w-6 text-background" />
-              </div>
-              <h3 className="font-semibold">1. Compartilhe</h3>
-              <p className="text-sm text-muted-foreground">
-                Envie seu link ou código para amigos e seguidores
-              </p>
-            </div>
-
-            <div className="text-center space-y-3">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-foreground">
-                <Ticket className="h-6 w-6 text-background" />
-              </div>
-              <h3 className="font-semibold">2. Eles Ganham 20%</h3>
-              <p className="text-sm text-muted-foreground">
-                Quem usar seu link ou código ganha 20% de desconto no plano
-              </p>
-            </div>
-
-            <div className="text-center space-y-3">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-foreground">
-                <DollarSign className="h-6 w-6 text-background" />
-              </div>
-              <h3 className="font-semibold">3. Você Ganha 30%</h3>
-              <p className="text-sm text-muted-foreground">
-                Quando assinam, você recebe 30% do valor automaticamente
-              </p>
-            </div>
-
-            <div className="text-center space-y-3">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-foreground">
-                <Wallet className="h-6 w-6 text-background" />
-              </div>
-              <h3 className="font-semibold">4. Saque via PIX</h3>
-              <p className="text-sm text-muted-foreground">
-                Solicite seu saque via PIX quando quiser
-              </p>
-            </div>
+    <TooltipProvider>
+      <div className="container mx-auto p-4 md:p-6 space-y-8 max-w-5xl">
+        {/* Header */}
+        <div className="text-center space-y-3 py-6">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Indique e Ganhe</h1>
+          <p className="text-muted-foreground max-w-lg mx-auto">
+            Compartilhe o VitrineTurbo e ganhe comissao por cada indicacao
+          </p>
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <Badge variant="secondary" className="text-sm px-3 py-1">
+              <DollarSign className="h-3.5 w-3.5 mr-1" />
+              Voce ganha 30%
+            </Badge>
+            <Badge variant="outline" className="text-sm px-3 py-1">
+              <Ticket className="h-3.5 w-3.5 mr-1" />
+              Indicado ganha 20% off
+            </Badge>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Referral Link Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Share2 className="h-5 w-5" />
-            Seu Link de Indicação
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            <Input
-              value={referralLink}
-              readOnly
-              className="font-mono text-sm"
-            />
-            <Button onClick={copyToClipboard} className="shrink-0">
-              <Copy className="h-4 w-4 mr-2" />
-              Copiar
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Coupon Code Section */}
-      <Card className="border-dashed border-2">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Ticket className="h-5 w-5" />
-            Seu Cupom de Desconto
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="flex-1 rounded-lg bg-muted px-5 py-4 text-center">
-              <span className="text-2xl font-bold font-mono tracking-wider">{referralCode}</span>
-            </div>
-            <Button onClick={copyCodeToClipboard} variant="outline" className="shrink-0">
-              <Copy className="h-4 w-4 mr-2" />
-              Copiar
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Footer Logo Tip */}
-      <Alert className="border-border bg-muted/50">
-        <Store className="h-4 w-4" />
-        <AlertDescription className="text-sm">
-          <strong>Dica:</strong> Seu link de indicação também está presente na logomarca VitrineTurbo no rodapé do seu catálogo.
-        </AlertDescription>
-      </Alert>
-
-      {/* Commission Plans */}
-      <div className="grid md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6 text-center space-y-2">
-            <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-muted">
-              <TrendingUp className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <div className="text-3xl font-bold">R$ 44,70</div>
-            <div className="text-sm text-muted-foreground">Plano Trimestral</div>
-            <Badge variant="secondary" className="text-xs">30% de R$ 149</Badge>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6 text-center space-y-2">
-            <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-muted">
-              <Crown className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <div className="text-3xl font-bold">R$ 68,70</div>
-            <div className="text-sm text-muted-foreground">Plano Semestral</div>
-            <Badge variant="secondary" className="text-xs">30% de R$ 229</Badge>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6 text-center space-y-2">
-            <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-muted">
-              <Gift className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <div className="text-3xl font-bold">R$ 100,80</div>
-            <div className="text-sm text-muted-foreground">Plano Anual</div>
-            <Badge variant="secondary" className="text-xs">30% de R$ 336</Badge>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Separator between promotional and metrics sections */}
-      <Separator className="my-2" />
-
-      {/* Minhas Metricas Section */}
-      <section className="bg-muted/30 dark:bg-muted/10 border rounded-xl p-4 md:p-6 space-y-6">
-        <div className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-muted-foreground" />
-          <h2 className="text-lg font-semibold">Minhas Métricas</h2>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-medium">Cliques no Link</CardTitle>
-              <MousePointerClick className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{clickCount}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-medium">Total de Indicados</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{referredUsers.length}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {stats?.activeReferrals || 0} com plano ativo
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-medium">Comissões Totais</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrencyI18n(stats?.totalCommissions || 0, 'BRL', 'pt-BR')}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-medium">Disponível p/ Saque</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrencyI18n(stats?.availableForWithdrawal || 0, 'BRL', 'pt-BR')}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-medium">Comissões Pagas</CardTitle>
-              <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrencyI18n(stats?.paidCommissions || 0, 'BRL', 'pt-BR')}</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Referred Users Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Seus Indicados
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {referredUsers.length === 0 ? (
-              <div className="text-center py-10 text-muted-foreground">
-                <UserPlus className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                <p className="text-sm">Nenhum indicado ainda.</p>
-                <p className="text-xs mt-1">Compartilhe seu link ou código e comece a ganhar!</p>
-              </div>
-            ) : (
-              <div className="rounded-md border overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Data de Cadastro</TableHead>
-                      <TableHead>Plano</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {referredUsers.map((referred) => (
-                      <TableRow key={referred.id}>
-                        <TableCell className="font-medium">{referred.name || '\u2014'}</TableCell>
-                        <TableCell className="text-muted-foreground text-sm">{maskEmail(referred.email)}</TableCell>
-                        <TableCell className="text-sm">
-                          {new Date(referred.created_at).toLocaleDateString('pt-BR')}
-                        </TableCell>
-                        <TableCell>{getPlanBadge(referred.plan_status)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* PIX and Withdrawal Section */}
+        {/* Link + Coupon side by side */}
         <div className="grid md:grid-cols-2 gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5" />
-                Chave PIX
+          <Card className="transition-all duration-200 hover:shadow-md">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Share2 className="h-4 w-4" />
+                Seu Link de Indicacao
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-[220px]">
+                    <p>Tambem presente no logo VitrineTurbo no rodape do seu catalogo</p>
+                  </TooltipContent>
+                </Tooltip>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {pixKeys.length > 0 ? (
-                <div className="space-y-2">
-                  <div className="p-3 bg-muted rounded-lg">
-                    <p className="text-sm font-medium">{pixKeys[0].holder_name}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {pixKeys[0].pix_key_type.toUpperCase()}: {pixKeys[0].pix_key}
+            <CardContent>
+              <div className="flex gap-2">
+                <Input
+                  value={referralLink}
+                  readOnly
+                  className="font-mono text-xs"
+                />
+                <Button
+                  onClick={copyToClipboard}
+                  className="shrink-0 min-w-[90px] transition-all duration-200"
+                  variant={copiedLink ? 'secondary' : 'default'}
+                >
+                  {copiedLink ? (
+                    <>
+                      <Check className="h-4 w-4 mr-1" />
+                      Copiado
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4 mr-1" />
+                      Copiar
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="transition-all duration-200 hover:shadow-md">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Ticket className="h-4 w-4" />
+                Seu Cupom de Desconto
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 rounded-lg bg-muted px-4 py-2.5 text-center">
+                  <span className="text-xl font-bold font-mono tracking-widest">{referralCode}</span>
+                </div>
+                <Button
+                  onClick={copyCodeToClipboard}
+                  variant={copiedCode ? 'secondary' : 'outline'}
+                  className="shrink-0 min-w-[90px] transition-all duration-200"
+                >
+                  {copiedCode ? (
+                    <>
+                      <Check className="h-4 w-4 mr-1" />
+                      Copiado
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4 mr-1" />
+                      Copiar
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* How it Works - Minimal Timeline */}
+        <div className="py-2">
+          <div className="flex items-center gap-2 mb-4">
+            <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Como funciona</h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { num: '1', icon: Share2, label: 'Compartilhe', desc: 'Envie link ou codigo' },
+              { num: '2', icon: Ticket, label: 'Desconto 20%', desc: 'Indicado ganha desconto' },
+              { num: '3', icon: DollarSign, label: 'Comissao 30%', desc: 'Voce recebe ao assinarem' },
+              { num: '4', icon: Wallet, label: 'Saque PIX', desc: 'Retire quando quiser' },
+            ].map((step) => (
+              <div key={step.num} className="flex flex-col items-center text-center gap-2">
+                <div className="flex items-center justify-center w-9 h-9 rounded-full bg-foreground/10 text-foreground text-sm font-bold">
+                  {step.num}
+                </div>
+                <span className="text-sm font-medium">{step.label}</span>
+                <span className="text-xs text-muted-foreground leading-tight">{step.desc}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Commission Reward Tiers */}
+        <div>
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-4">Sua comissao por plano</h2>
+          <div className="grid md:grid-cols-3 gap-4">
+            <Card className="transition-all duration-200 hover:shadow-md">
+              <CardContent className="pt-5 pb-5 text-center space-y-1.5">
+                <div className="text-2xl font-bold">R$ 44,70</div>
+                <div className="text-sm text-muted-foreground">Plano Trimestral</div>
+                <Badge variant="secondary" className="text-xs">30% de R$ 149</Badge>
+              </CardContent>
+            </Card>
+
+            <Card className="transition-all duration-200 hover:shadow-md">
+              <CardContent className="pt-5 pb-5 text-center space-y-1.5">
+                <div className="text-2xl font-bold">R$ 68,70</div>
+                <div className="text-sm text-muted-foreground">Plano Semestral</div>
+                <Badge variant="secondary" className="text-xs">30% de R$ 229</Badge>
+              </CardContent>
+            </Card>
+
+            <Card className="transition-all duration-200 hover:shadow-md relative ring-2 ring-foreground/10">
+              <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
+                <Badge className="text-[10px] px-2 py-0.5">Maior Retorno</Badge>
+              </div>
+              <CardContent className="pt-5 pb-5 text-center space-y-1.5">
+                <div className="text-2xl font-bold">R$ 100,80</div>
+                <div className="text-sm text-muted-foreground">Plano Anual</div>
+                <Badge variant="secondary" className="text-xs">30% de R$ 336</Badge>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Metrics Section */}
+        <section className="space-y-6">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-muted-foreground" />
+            <h2 className="text-lg font-semibold">Minhas Metricas</h2>
+          </div>
+
+          {/* Primary Stats */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-xs font-medium">Total de Indicados</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{referredUsers.length}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {stats?.activeReferrals || 0} com plano ativo
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-xs font-medium">Comissoes Totais</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrencyI18n(stats?.totalCommissions || 0, 'BRL', 'pt-BR')}</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-xs font-medium">Disponivel p/ Saque</CardTitle>
+                <Wallet className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrencyI18n(available, 'BRL', 'pt-BR')}</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Secondary stats inline */}
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground px-1">
+            <span className="inline-flex items-center gap-1.5">
+              <MousePointerClick className="h-3.5 w-3.5" />
+              {clickCount} cliques no link
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              {formatCurrencyI18n(stats?.paidCommissions || 0, 'BRL', 'pt-BR')} em comissoes pagas
+            </span>
+          </div>
+
+          {/* Referred Users Table */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Users className="h-4 w-4" />
+                Seus Indicados
+                {referredUsers.length > 0 && (
+                  <Badge variant="secondary" className="text-xs ml-1">{referredUsers.length}</Badge>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {referredUsers.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <UserPlus className="h-8 w-8 mx-auto mb-3 opacity-30" />
+                  <p className="text-sm">Nenhum indicado ainda</p>
+                  <p className="text-xs mt-1.5">
+                    Copie seu link acima e comece a compartilhar
+                  </p>
+                </div>
+              ) : (
+                <div className="rounded-md border overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Cadastro</TableHead>
+                        <TableHead>Plano</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {referredUsers.slice(0, 10).map((referred) => (
+                        <TableRow key={referred.id}>
+                          <TableCell className="font-medium">{referred.name || '\u2014'}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm">{maskEmail(referred.email)}</TableCell>
+                          <TableCell className="text-sm">
+                            {new Date(referred.created_at).toLocaleDateString('pt-BR')}
+                          </TableCell>
+                          <TableCell>{getPlanBadge(referred.plan_status)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Withdrawal Section */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Wallet className="h-5 w-5 text-muted-foreground" />
+            <h2 className="text-lg font-semibold">Retirar Ganhos</h2>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            <Card className="transition-all duration-200 hover:shadow-md">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <CreditCard className="h-4 w-4" />
+                  Chave PIX
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {pixKeys.length > 0 ? (
+                  <>
+                    <div className="p-3 bg-muted rounded-lg">
+                      <p className="text-sm font-medium">{pixKeys[0].holder_name}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {pixKeys[0].pix_key_type.toUpperCase()}: {pixKeys[0].pix_key}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => setShowPixDialog(true)}
+                    >
+                      Editar Chave PIX
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm text-muted-foreground">
+                      Configure sua chave PIX para receber saques
+                    </p>
+                    <Button
+                      className="w-full"
+                      onClick={() => setShowPixDialog(true)}
+                    >
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Configurar PIX
+                    </Button>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="transition-all duration-200 hover:shadow-md">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <DollarSign className="h-4 w-4" />
+                  Solicitar Saque
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-center py-2">
+                  <div className="text-3xl font-bold">
+                    {formatCurrencyI18n(available, 'BRL', 'pt-BR')}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Disponivel para saque</p>
+                </div>
+
+                {available < withdrawalMin && (
+                  <div className="space-y-1.5">
+                    <Progress value={withdrawalProgress} className="h-2" />
+                    <p className="text-xs text-muted-foreground text-center">
+                      Faltam {formatCurrencyI18n(withdrawalMin - available, 'BRL', 'pt-BR')} para o minimo de R$ 50,00
                     </p>
                   </div>
+                )}
+
+                {available >= withdrawalMin ? (
                   <Button
-                    variant="outline"
                     className="w-full"
-                    onClick={() => setShowPixDialog(true)}
+                    onClick={() => setShowWithdrawalDialog(true)}
                   >
-                    Editar Chave PIX
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    Solicitar Saque
                   </Button>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-sm text-muted-foreground">
-                    Configure sua chave PIX para receber os saques
+                ) : (
+                  <Button className="w-full" disabled variant="secondary">
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    Solicitar Saque
+                  </Button>
+                )}
+
+                {pixKeys.length === 0 && (
+                  <p className="text-xs text-center text-muted-foreground">
+                    Configure sua chave PIX primeiro
                   </p>
-                  <Button
-                    className="w-full"
-                    onClick={() => setShowPixDialog(true)}
-                  >
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    Configurar PIX
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </section>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
-                Solicitar Saque
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-center py-4">
-                <div className="text-4xl font-bold">
-                  {formatCurrencyI18n(stats?.availableForWithdrawal || 0, 'BRL', 'pt-BR')}
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">Disponível para saque</p>
-              </div>
-
-              {(stats?.availableForWithdrawal || 0) >= 50 ? (
-                <Button
-                  className="w-full"
-                  onClick={() => setShowWithdrawalDialog(true)}
-                >
-                  <DollarSign className="h-4 w-4 mr-2" />
-                  Solicitar Saque
-                </Button>
-              ) : (
-                <Button className="w-full" disabled variant="secondary">
-                  <DollarSign className="h-4 w-4 mr-2" />
-                  Solicitar Saque
-                </Button>
-              )}
-
-              <p className="text-xs text-center text-muted-foreground">
-                {pixKeys.length === 0
-                  ? 'Configure sua chave PIX primeiro'
-                  : 'Valor mínimo para saque: R$ 50,00'}
-              </p>
-            </CardContent>
-          </Card>
+        {/* Terms Link */}
+        <div className="text-center pt-2 pb-4">
+          <Link
+            to="/termos-indicacoes"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <FileText className="h-4 w-4" />
+            Termos e Condicoes do Programa de Indicacoes
+          </Link>
         </div>
-      </section>
 
-      {/* Terms Link */}
-      <div className="text-center py-4">
-        <Link
-          to="/termos-indicacoes"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <FileText className="h-4 w-4" />
-          Termos e Condições do Programa de Indicações
-        </Link>
+        {/* Dialogs */}
+        <PixKeyDialog
+          open={showPixDialog}
+          onOpenChange={setShowPixDialog}
+          onSuccess={refreshData}
+          existingKey={pixKeys[0] || null}
+        />
+
+        <WithdrawalDialog
+          open={showWithdrawalDialog}
+          onOpenChange={setShowWithdrawalDialog}
+          onSuccess={refreshData}
+          availableAmount={stats?.availableForWithdrawal || 0}
+          pixKeys={pixKeys}
+          onConfigurePixKey={() => {
+            setShowWithdrawalDialog(false);
+            setShowPixDialog(true);
+          }}
+        />
       </div>
-
-      {/* Dialogs */}
-      <PixKeyDialog
-        open={showPixDialog}
-        onOpenChange={setShowPixDialog}
-        onSuccess={refreshData}
-        existingKey={pixKeys[0] || null}
-      />
-
-      <WithdrawalDialog
-        open={showWithdrawalDialog}
-        onOpenChange={setShowWithdrawalDialog}
-        onSuccess={refreshData}
-        availableAmount={stats?.availableForWithdrawal || 0}
-        pixKeys={pixKeys}
-        onConfigurePixKey={() => {
-          setShowWithdrawalDialog(false);
-          setShowPixDialog(true);
-        }}
-      />
-    </div>
+    </TooltipProvider>
   );
 }
