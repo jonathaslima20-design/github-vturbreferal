@@ -219,7 +219,7 @@ export default function ReferralPage() {
       <Alert className="border-border bg-muted/50">
         <Store className="h-4 w-4" />
         <AlertDescription className="text-sm">
-          <strong>Dica:</strong> Seu link de indicação também está presente na logomarca VitrineTurbo no rodapé do seu catálogo. Visitantes que clicarem nela serão direcionados para se cadastrar com seu código de indicação automaticamente.
+          <strong>Dica:</strong> Seu link de indicação também está presente na logomarca VitrineTurbo no rodapé do seu catálogo.
         </AlertDescription>
       </Alert>
 
