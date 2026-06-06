@@ -39,7 +39,7 @@ function getPlanBadge(planStatus: string) {
     case 'active':
       return <Badge>Ativo</Badge>;
     case 'free':
-      return <Badge variant="secondary">Gratis</Badge>;
+      return <Badge variant="secondary">Grátis</Badge>;
     case 'expired':
       return <Badge variant="destructive">Expirado</Badge>;
     default:
@@ -83,7 +83,7 @@ export default function ReferralPage() {
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(referralLink);
-      toast.success('Link copiado para area de transferencia!');
+      toast.success('Link copiado para área de transferência!');
     } catch {
       toast.error('Erro ao copiar link');
     }
@@ -92,9 +92,9 @@ export default function ReferralPage() {
   const copyCodeToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(referralCode);
-      toast.success('Codigo copiado!');
+      toast.success('Código copiado!');
     } catch {
-      toast.error('Erro ao copiar codigo');
+      toast.error('Erro ao copiar código');
     }
   };
 
@@ -127,7 +127,7 @@ export default function ReferralPage() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            {error || 'Nao foi possivel gerar seu link de indicacao. Por favor, recarregue a pagina.'}
+            {error || 'Não foi possível gerar seu link de indicação. Por favor, recarregue a página.'}
           </AlertDescription>
         </Alert>
         <Button onClick={refreshData} className="w-full max-w-md mx-auto block">
@@ -146,7 +146,7 @@ export default function ReferralPage() {
         </div>
         <h1 className="text-4xl font-bold">Indique e Ganhe</h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Compartilhe o VitrineTurbo e ganhe <span className="font-bold text-foreground">30% de comissao</span> por cada indicacao que ativar um plano. Seu indicado ganha <span className="font-bold text-foreground">20% de desconto</span>!
+          Compartilhe o VitrineTurbo e ganhe <span className="font-bold text-foreground">30% de comissão</span> por cada indicação que ativar um plano. Seu indicado ganha <span className="font-bold text-foreground">20% de desconto</span>!
         </p>
       </div>
 
@@ -155,7 +155,7 @@ export default function ReferralPage() {
         <Alert className="border-border bg-muted">
           <Share2 className="h-4 w-4" />
           <AlertDescription className="text-sm">
-            <strong>Comece agora!</strong> Compartilhe seu link ou codigo de indicacao. Quem usar ganha 20% de desconto e voce ganha 30% de comissao automaticamente.
+            <strong>Comece agora!</strong> Compartilhe seu link ou código de indicação. Quem usar ganha 20% de desconto e você ganha 30% de comissão automaticamente.
           </AlertDescription>
         </Alert>
       )}
@@ -187,7 +187,7 @@ export default function ReferralPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-medium">Comissoes Totais</CardTitle>
+            <CardTitle className="text-xs font-medium">Comissões Totais</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -197,7 +197,7 @@ export default function ReferralPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-medium">Disponivel p/ Saque</CardTitle>
+            <CardTitle className="text-xs font-medium">Disponível p/ Saque</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -207,7 +207,7 @@ export default function ReferralPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-medium">Comissoes Pagas</CardTitle>
+            <CardTitle className="text-xs font-medium">Comissões Pagas</CardTitle>
             <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -221,7 +221,7 @@ export default function ReferralPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Share2 className="h-5 w-5" />
-            Seu Link de Indicacao
+            Seu Link de Indicação
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -257,7 +257,7 @@ export default function ReferralPage() {
       <Alert className="border-border bg-muted/50">
         <Store className="h-4 w-4" />
         <AlertDescription className="text-sm">
-          <strong>Dica:</strong> Seu link de indicacao tambem esta presente na logomarca VitrineTurbo no rodape do seu catalogo. Visitantes que clicarem nela serao direcionados para se cadastrar com seu codigo de indicacao automaticamente.
+          <strong>Dica:</strong> Seu link de indicação também está presente na logomarca VitrineTurbo no rodapé do seu catálogo. Visitantes que clicarem nela serão direcionados para se cadastrar com seu código de indicação automaticamente.
         </AlertDescription>
       </Alert>
 
@@ -280,7 +280,7 @@ export default function ReferralPage() {
             </Button>
           </div>
           <p className="text-sm text-muted-foreground">
-            Compartilhe este codigo e quem usa-lo no checkout ganha 20% de desconto. Voce ganha 30% de comissao automaticamente.
+            Compartilhe este código e quem usá-lo no checkout ganha 20% de desconto. Você ganha 30% de comissão automaticamente.
           </p>
         </CardContent>
       </Card>
@@ -334,7 +334,7 @@ export default function ReferralPage() {
             <div className="text-center py-10 text-muted-foreground">
               <UserPlus className="h-10 w-10 mx-auto mb-3 opacity-40" />
               <p className="text-sm">Nenhum indicado ainda.</p>
-              <p className="text-xs mt-1">Compartilhe seu link ou codigo e comece a ganhar!</p>
+              <p className="text-xs mt-1">Compartilhe seu link ou código e comece a ganhar!</p>
             </div>
           ) : (
             <div className="rounded-md border overflow-x-auto">
@@ -381,7 +381,7 @@ export default function ReferralPage() {
               </div>
               <h3 className="font-semibold">1. Compartilhe</h3>
               <p className="text-sm text-muted-foreground">
-                Envie seu link ou codigo para amigos e seguidores
+                Envie seu link ou código para amigos e seguidores
               </p>
             </div>
 
@@ -391,7 +391,7 @@ export default function ReferralPage() {
               </div>
               <h3 className="font-semibold">2. Eles Ganham 20%</h3>
               <p className="text-sm text-muted-foreground">
-                Quem usar seu link ou codigo ganha 20% de desconto no plano
+                Quem usar seu link ou código ganha 20% de desconto no plano
               </p>
             </div>
 
@@ -399,9 +399,9 @@ export default function ReferralPage() {
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-foreground">
                 <DollarSign className="h-6 w-6 text-background" />
               </div>
-              <h3 className="font-semibold">3. Voce Ganha 30%</h3>
+              <h3 className="font-semibold">3. Você Ganha 30%</h3>
               <p className="text-sm text-muted-foreground">
-                Quando assinam, voce recebe 30% do valor automaticamente
+                Quando assinam, você recebe 30% do valor automaticamente
               </p>
             </div>
 
@@ -473,7 +473,7 @@ export default function ReferralPage() {
               <div className="text-4xl font-bold">
                 {formatCurrencyI18n(stats?.availableForWithdrawal || 0, 'BRL', 'pt-BR')}
               </div>
-              <p className="text-sm text-muted-foreground mt-1">Disponivel para saque</p>
+              <p className="text-sm text-muted-foreground mt-1">Disponível para saque</p>
             </div>
 
             {(stats?.availableForWithdrawal || 0) >= 50 ? (
@@ -494,7 +494,7 @@ export default function ReferralPage() {
             <p className="text-xs text-center text-muted-foreground">
               {pixKeys.length === 0
                 ? 'Configure sua chave PIX primeiro'
-                : 'Valor minimo para saque: R$ 50,00'}
+                : 'Valor mínimo para saque: R$ 50,00'}
             </p>
           </CardContent>
         </Card>
@@ -507,7 +507,7 @@ export default function ReferralPage() {
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <FileText className="h-4 w-4" />
-          Termos e Condicoes do Programa de Indicacoes
+          Termos e Condições do Programa de Indicações
         </Link>
       </div>
 
