@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useReferralData } from '@/hooks/useReferralData';
+import { logActivity } from '@/lib/activityLogger';
 import { formatCurrencyI18n } from '@/lib/i18n';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -63,6 +64,7 @@ export default function ReferralPage() {
       await navigator.clipboard.writeText(referralLink);
       setCopiedLink(true);
       toast.success('Link copiado!');
+      logActivity('referral.copy_link', 'Copiou o link de indicação', 'referral');
       setTimeout(() => setCopiedLink(false), 2000);
     } catch {
       toast.error('Erro ao copiar link');
@@ -74,6 +76,7 @@ export default function ReferralPage() {
       await navigator.clipboard.writeText(referralCode);
       setCopiedCode(true);
       toast.success('Código copiado!');
+      logActivity('referral.copy_code', 'Copiou o código/cupom de indicação', 'referral');
       setTimeout(() => setCopiedCode(false), 2000);
     } catch {
       toast.error('Erro ao copiar código');

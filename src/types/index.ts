@@ -78,7 +78,9 @@ export type ActivityAction =
   | 'appearance.update'
   | 'order.status_change'
   | 'subscription.activated'
-  | 'subscription.expired';
+  | 'subscription.expired'
+  | 'referral.copy_link'
+  | 'referral.copy_code';
 
 export interface ActivityLog {
   id: string;
