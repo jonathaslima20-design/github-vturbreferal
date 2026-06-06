@@ -126,13 +126,13 @@ export default function ReferralPage() {
           <p className="text-muted-foreground max-w-lg mx-auto">
             Compartilhe o VitrineTurbo e ganhe comissao por cada indicacao
           </p>
-          <div className="flex items-center justify-center gap-3 pt-2">
-            <Badge variant="secondary" className="text-sm px-3 py-1">
-              <DollarSign className="h-3.5 w-3.5 mr-1" />
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+            <Badge variant="secondary" className="text-xs sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1">
+              <DollarSign className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1" />
               Voce ganha 30%
             </Badge>
-            <Badge variant="outline" className="text-sm px-3 py-1">
-              <Ticket className="h-3.5 w-3.5 mr-1" />
+            <Badge variant="outline" className="text-xs sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1">
+              <Ticket className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1" />
               Indicado ganha 20% off
             </Badge>
           </div>
