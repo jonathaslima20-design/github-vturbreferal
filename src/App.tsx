@@ -82,6 +82,7 @@ import LinkPreviewPage from '@/pages/admin/LinkPreviewPage.tsx';
 import OffersManagementPage from '@/pages/admin/OffersManagementPage.tsx';
 import OfferEditorPage from '@/pages/admin/OfferEditorPage.tsx';
 import OfferAnalyticsPage from '@/pages/admin/OfferAnalyticsPage.tsx';
+import NotificationSettingsPage from '@/pages/admin/NotificationSettingsPage.tsx';
 
 // Route Guards
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -246,6 +247,7 @@ function AppContent() {
             <Route path="/admin/referrals" element={<ReferralManagementPage />} />
             <Route path="/admin/orphaned-files" element={<OrphanedFilesPage />} />
             <Route path="/admin/settings" element={<AdminSettingsPage />} />
+            <Route path="/admin/notifications" element={<NotificationSettingsPage />} />
             <Route path="/admin/netlify" element={<NetlifyIntegrationPage />} />
             <Route path="/admin/help" element={<HelpManagementPage />} />
             <Route path="/admin/mercadopago" element={<MercadoPagoPage />} />

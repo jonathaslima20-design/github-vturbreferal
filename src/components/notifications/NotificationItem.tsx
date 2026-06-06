@@ -1,8 +1,9 @@
-import { MessageSquare, Eye, CreditCard, Phone, Tag, Info, X, ShoppingBag, TriangleAlert as AlertTriangle, PackageX, Gift, UserPlus } from 'lucide-react';
+import { MessageSquare, Eye, CreditCard, Phone, Tag, Info, X, ShoppingBag, TriangleAlert as AlertTriangle, PackageX, Gift, UserPlus, Sparkles, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { AppNotification, NotificationType } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useNavigate } from 'react-router-dom';
 
 const ICON_MAP: Record<NotificationType, React.ElementType> = {
   new_lead: MessageSquare,
@@ -16,6 +17,8 @@ const ICON_MAP: Record<NotificationType, React.ElementType> = {
   out_of_stock: PackageX,
   referral_signup: UserPlus,
   referral_upgrade: Gift,
+  promotional_offer: Tag,
+  novidades: Sparkles,
   system: Info,
 };
 
@@ -31,6 +34,8 @@ const COLOR_MAP: Record<NotificationType, string> = {
   out_of_stock: 'text-red-600 bg-red-500/10',
   referral_signup: 'text-cyan-500 bg-cyan-500/10',
   referral_upgrade: 'text-emerald-600 bg-emerald-500/10',
+  promotional_offer: 'text-pink-500 bg-pink-500/10',
+  novidades: 'text-sky-500 bg-sky-500/10',
   system: 'text-muted-foreground bg-muted',
 };
 
@@ -47,6 +52,7 @@ export default function NotificationItem({
   onDelete,
   onClick,
 }: NotificationItemProps) {
+  const navigate = useNavigate();
   const Icon = ICON_MAP[notification.type] || Info;
   const colorClass = COLOR_MAP[notification.type] || COLOR_MAP.system;
 
@@ -60,6 +66,20 @@ export default function NotificationItem({
       onRead(notification.id);
     }
     onClick?.(notification);
+  };
+
+  const handleCtaClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!notification.is_read) {
+      onRead(notification.id);
+    }
+    if (notification.cta_url) {
+      if (notification.cta_url.startsWith('http')) {
+        window.open(notification.cta_url, '_blank');
+      } else {
+        navigate(notification.cta_url);
+      }
+    }
   };
 
   return (
@@ -86,6 +106,15 @@ export default function NotificationItem({
         <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">
           {notification.message}
         </p>
+        {notification.cta_label && notification.cta_url && (
+          <button
+            onClick={handleCtaClick}
+            className="mt-1.5 inline-flex items-center gap-1 rounded-md border border-border px-2 py-0.5 text-[11px] font-medium text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+          >
+            {notification.cta_label}
+            <ExternalLink className="h-3 w-3" />
+          </button>
+        )}
         <p className="mt-1 text-[11px] text-muted-foreground/70">{timeAgo}</p>
       </div>
 

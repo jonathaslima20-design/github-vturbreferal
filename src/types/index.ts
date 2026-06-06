@@ -506,6 +506,7 @@ export type NotificationType =
   | 'referral_signup'
   | 'referral_upgrade'
   | 'promotional_offer'
+  | 'novidades'
   | 'system';
 
 export interface AppNotification {
@@ -516,8 +517,64 @@ export interface AppNotification {
   message: string;
   related_entity_id?: string | null;
   related_entity_type?: string | null;
+  cta_label?: string | null;
+  cta_url?: string | null;
   is_read: boolean;
   created_at: string;
+}
+
+// Notification Management System Types
+export type NotificationCategory = 'vencimento' | 'indicacao' | 'ofertas' | 'sistema' | 'novidades';
+export type BroadcastStatus = 'draft' | 'scheduled' | 'sending' | 'sent' | 'failed';
+export type RuleType = 'days_before_expiry' | 'days_after_expiry' | 'on_referral_signup' | 'on_referral_upgrade' | 'on_plan_change' | 'periodic';
+export type TargetAudience = 'all' | 'active' | 'expired' | 'free' | 'specific';
+
+export interface NotificationTemplate {
+  id: string;
+  slug: string;
+  category: NotificationCategory;
+  notification_type: NotificationType;
+  title_template: string;
+  message_template: string;
+  cta_label?: string | null;
+  cta_url?: string | null;
+  is_enabled: boolean;
+  is_system: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NotificationRule {
+  id: string;
+  template_id: string;
+  rule_type: RuleType;
+  rule_config: Record<string, unknown>;
+  target_audience: TargetAudience;
+  cooldown_hours: number;
+  is_enabled: boolean;
+  last_executed_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  notification_templates?: NotificationTemplate;
+}
+
+export interface NotificationBroadcast {
+  id: string;
+  template_id?: string | null;
+  title: string;
+  message: string;
+  notification_type: NotificationType;
+  cta_label?: string | null;
+  cta_url?: string | null;
+  target_audience: TargetAudience;
+  target_user_ids?: string[] | null;
+  scheduled_at?: string | null;
+  sent_at?: string | null;
+  recipients_count: number;
+  status: BroadcastStatus;
+  sent_by?: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 // Coupon System Types
