@@ -20,8 +20,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
-  Gift, Users, DollarSign, CircleCheck as CheckCircle2, TrendingUp,
-  Share2, UserPlus, MousePointerClick, Crown, CreditCard, Copy,
+  Gift, Users, DollarSign, TrendingUp,
+  Share2, UserPlus, MousePointerClick, CreditCard, Copy,
   CircleAlert as AlertCircle, FileText, Ticket, Wallet, Info, Check,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -280,8 +280,18 @@ export default function ReferralPage() {
             <h2 className="text-lg font-semibold">Minhas Metricas</h2>
           </div>
 
-          {/* Primary Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-xs font-medium">Cliques no Link</CardTitle>
+                <MousePointerClick className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{clickCount}</div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-xs font-medium">Total de Indicados</CardTitle>
@@ -314,18 +324,6 @@ export default function ReferralPage() {
                 <div className="text-2xl font-bold">{formatCurrencyI18n(available, 'BRL', 'pt-BR')}</div>
               </CardContent>
             </Card>
-          </div>
-
-          {/* Secondary stats inline */}
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground px-1">
-            <span className="inline-flex items-center gap-1.5">
-              <MousePointerClick className="h-3.5 w-3.5" />
-              {clickCount} cliques no link
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              {formatCurrencyI18n(stats?.paidCommissions || 0, 'BRL', 'pt-BR')} em comissoes pagas
-            </span>
           </div>
 
           {/* Referred Users Table */}
