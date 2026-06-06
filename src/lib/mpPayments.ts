@@ -46,6 +46,7 @@ export interface PixPaymentArgs {
   };
   early_renewal?: boolean;
   offer_id?: string;
+  referral_code?: string;
 }
 
 export interface CardPaymentArgs {
@@ -61,6 +62,7 @@ export interface CardPaymentArgs {
   };
   early_renewal?: boolean;
   offer_id?: string;
+  referral_code?: string;
 }
 
 export interface PixPaymentResult {

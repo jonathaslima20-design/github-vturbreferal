@@ -106,6 +106,41 @@ export function getCommissionAmount(planType: string): number {
   return 0.00;
 }
 
+const MIN_COMMISSION = 44.70;
+
+export function calculatePercentageCommission(planPrice: number, percentage: number): number {
+  const amount = Math.round(planPrice * (percentage / 100) * 100) / 100;
+  return Math.max(amount, MIN_COMMISSION);
+}
+
+export function calculateReferralDiscount(planPrice: number, discountPercentage: number): { discount: number; finalPrice: number } {
+  const discount = Math.round(planPrice * (discountPercentage / 100) * 100) / 100;
+  const finalPrice = Math.round((planPrice - discount) * 100) / 100;
+  return { discount, finalPrice };
+}
+
+export async function validateReferralCoupon(code: string, currentUserId: string): Promise<{ valid: boolean; referrerId?: string; error?: string }> {
+  if (!code || code.trim().length === 0) {
+    return { valid: false, error: 'Codigo nao pode ser vazio' };
+  }
+
+  const { data: referrer, error } = await supabase
+    .from('users')
+    .select('id, referral_code')
+    .ilike('referral_code', code.trim())
+    .maybeSingle();
+
+  if (error || !referrer) {
+    return { valid: false, error: 'Cupom nao encontrado ou invalido' };
+  }
+
+  if (referrer.id === currentUserId) {
+    return { valid: false, error: 'Voce nao pode usar seu proprio cupom' };
+  }
+
+  return { valid: true, referrerId: referrer.id };
+}
+
 export async function trackReferralClick(referralCode: string): Promise<void> {
   try {
     const { data: referrer } = await supabase

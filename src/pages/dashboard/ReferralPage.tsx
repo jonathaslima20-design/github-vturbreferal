@@ -20,29 +20,12 @@ import {
 import {
   Gift, Users, DollarSign, CircleCheck as CheckCircle2, TrendingUp,
   Share2, UserPlus, MousePointerClick, Crown, CreditCard, Copy,
-  CircleAlert as AlertCircle, Lock, FileText,
+  CircleAlert as AlertCircle, FileText, Ticket, Wallet,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import PixKeyDialog from '@/components/referral/PixKeyDialog';
 import WithdrawalDialog from '@/components/referral/WithdrawalDialog';
-import { useSubscriptionModal } from '@/contexts/SubscriptionModalContext';
 import { supabase } from '@/lib/supabase';
-
-function PremiumLockOverlay({ onUpgrade }: { onUpgrade: () => void }) {
-  return (
-    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-lg bg-background/80 backdrop-blur-[2px]">
-      <div className="flex flex-col items-center gap-2 text-center px-4">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted">
-          <Lock className="h-4 w-4 text-muted-foreground" />
-        </div>
-        <p className="text-sm font-medium">Disponivel em planos pagos</p>
-        <Button size="sm" onClick={onUpgrade} className="mt-1">
-          Fazer Upgrade
-        </Button>
-      </div>
-    </div>
-  );
-}
 
 function maskEmail(email: string): string {
   const [local, domain] = email.split('@');
@@ -69,10 +52,9 @@ export default function ReferralPage() {
   const { stats, pixKeys, referralLink, clickCount, referredUsers, isLoading, refreshData, error } = useReferralData(user?.id);
   const [showPixDialog, setShowPixDialog] = useState(false);
   const [showWithdrawalDialog, setShowWithdrawalDialog] = useState(false);
-  const { openModal } = useSubscriptionModal();
   const [shareMessages, setShareMessages] = useState({ whatsapp: '', telegram: '' });
 
-  const isFreePlan = user?.plan_status === 'free' || user?.plan_status === 'expired';
+  const referralCode = referralLink ? referralLink.split('ref=')[1] || '' : '';
 
   useEffect(() => {
     supabase
@@ -91,22 +73,14 @@ export default function ReferralPage() {
   }, []);
 
   const buildShareText = (template: string) => {
-    const fallback = `Crie sua vitrine online no VitrineTurbo! Cadastre-se aqui: ${referralLink}`;
+    const fallback = `Crie sua vitrine online no VitrineTurbo com 20% de desconto! Cadastre-se aqui: ${referralLink} Ou use meu cupom ${referralCode} no checkout.`;
     if (!template) return fallback;
-    return template.replace(/\{link\}/g, referralLink);
+    return template
+      .replace(/\{link\}/g, referralLink)
+      .replace(/\{codigo\}/g, referralCode);
   };
 
   const copyToClipboard = async () => {
-    if (isFreePlan) {
-      toast('O programa Indique e Ganhe esta disponivel apenas para usuarios com plano ativo.', {
-        description: 'Faca upgrade para comecar a ganhar com indicacoes!',
-        action: {
-          label: 'Fazer Upgrade',
-          onClick: () => openModal(false),
-        },
-      });
-      return;
-    }
     try {
       await navigator.clipboard.writeText(referralLink);
       toast.success('Link copiado para area de transferencia!');
@@ -115,32 +89,21 @@ export default function ReferralPage() {
     }
   };
 
-  const shareViaWhatsApp = () => {
-    if (isFreePlan) {
-      toast('O programa Indique e Ganhe esta disponivel apenas para usuarios com plano ativo.', {
-        description: 'Faca upgrade para comecar a ganhar com indicacoes!',
-        action: {
-          label: 'Fazer Upgrade',
-          onClick: () => openModal(false),
-        },
-      });
-      return;
+  const copyCodeToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(referralCode);
+      toast.success('Codigo copiado!');
+    } catch {
+      toast.error('Erro ao copiar codigo');
     }
+  };
+
+  const shareViaWhatsApp = () => {
     const text = encodeURIComponent(buildShareText(shareMessages.whatsapp));
     window.open(`https://wa.me/?text=${text}`, '_blank');
   };
 
   const shareViaTelegram = () => {
-    if (isFreePlan) {
-      toast('O programa Indique e Ganhe esta disponivel apenas para usuarios com plano ativo.', {
-        description: 'Faca upgrade para comecar a ganhar com indicacoes!',
-        action: {
-          label: 'Fazer Upgrade',
-          onClick: () => openModal(false),
-        },
-      });
-      return;
-    }
     const text = encodeURIComponent(buildShareText(shareMessages.telegram));
     window.open(`https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${text}`, '_blank');
   };
@@ -183,7 +146,7 @@ export default function ReferralPage() {
         </div>
         <h1 className="text-4xl font-bold">Indique e Ganhe</h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Compartilhe o VitrineTurbo com amigos e ganhe <span className="font-bold text-foreground">ate R$ 100</span> por cada indicacao que ativar um plano
+          Compartilhe o VitrineTurbo e ganhe <span className="font-bold text-foreground">30% de comissao</span> por cada indicacao que ativar um plano. Seu indicado ganha <span className="font-bold text-foreground">20% de desconto</span>!
         </p>
       </div>
 
@@ -192,7 +155,7 @@ export default function ReferralPage() {
         <Alert className="border-border bg-muted">
           <Share2 className="h-4 w-4" />
           <AlertDescription className="text-sm">
-            <strong>Comece agora!</strong> Compartilhe seu link de indicacao e ganhe ate R$ 100 por cada amigo que ativar um plano.
+            <strong>Comece agora!</strong> Compartilhe seu link ou codigo de indicacao. Quem usar ganha 20% de desconto e voce ganha 30% de comissao automaticamente.
           </AlertDescription>
         </Alert>
       )}
@@ -290,6 +253,30 @@ export default function ReferralPage() {
         </CardContent>
       </Card>
 
+      {/* Coupon Code Section */}
+      <Card className="border-dashed border-2">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Ticket className="h-5 w-5" />
+            Seu Cupom de Desconto
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="flex-1 rounded-lg bg-muted px-5 py-4 text-center">
+              <span className="text-2xl font-bold font-mono tracking-wider">{referralCode}</span>
+            </div>
+            <Button onClick={copyCodeToClipboard} variant="outline" className="shrink-0">
+              <Copy className="h-4 w-4 mr-2" />
+              Copiar
+            </Button>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Compartilhe este codigo e quem usa-lo no checkout ganha 20% de desconto. Voce ganha 30% de comissao automaticamente.
+          </p>
+        </CardContent>
+      </Card>
+
       {/* Commission Plans */}
       <div className="grid md:grid-cols-3 gap-4">
         <Card>
@@ -297,8 +284,9 @@ export default function ReferralPage() {
             <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-muted">
               <TrendingUp className="h-5 w-5 text-muted-foreground" />
             </div>
-            <div className="text-3xl font-bold">R$ 50</div>
+            <div className="text-3xl font-bold">R$ 44,70</div>
             <div className="text-sm text-muted-foreground">Plano Trimestral</div>
+            <Badge variant="secondary" className="text-xs">30% de R$ 149</Badge>
           </CardContent>
         </Card>
 
@@ -307,8 +295,9 @@ export default function ReferralPage() {
             <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-muted">
               <Crown className="h-5 w-5 text-muted-foreground" />
             </div>
-            <div className="text-3xl font-bold">R$ 70</div>
+            <div className="text-3xl font-bold">R$ 68,70</div>
             <div className="text-sm text-muted-foreground">Plano Semestral</div>
+            <Badge variant="secondary" className="text-xs">30% de R$ 229</Badge>
           </CardContent>
         </Card>
 
@@ -317,8 +306,9 @@ export default function ReferralPage() {
             <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-muted">
               <Gift className="h-5 w-5 text-muted-foreground" />
             </div>
-            <div className="text-3xl font-bold">R$ 100</div>
+            <div className="text-3xl font-bold">R$ 100,80</div>
             <div className="text-sm text-muted-foreground">Plano Anual</div>
+            <Badge variant="secondary" className="text-xs">30% de R$ 336</Badge>
           </CardContent>
         </Card>
       </div>
@@ -336,7 +326,7 @@ export default function ReferralPage() {
             <div className="text-center py-10 text-muted-foreground">
               <UserPlus className="h-10 w-10 mx-auto mb-3 opacity-40" />
               <p className="text-sm">Nenhum indicado ainda.</p>
-              <p className="text-xs mt-1">Compartilhe seu link e comece a ganhar!</p>
+              <p className="text-xs mt-1">Compartilhe seu link ou codigo e comece a ganhar!</p>
             </div>
           ) : (
             <div className="rounded-md border overflow-x-auto">
@@ -367,7 +357,7 @@ export default function ReferralPage() {
         </CardContent>
       </Card>
 
-      {/* How it Works Section */}
+      {/* How it Works Section - 4 steps */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -376,24 +366,24 @@ export default function ReferralPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6">
             <div className="text-center space-y-3">
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-foreground">
                 <Share2 className="h-6 w-6 text-background" />
               </div>
               <h3 className="font-semibold">1. Compartilhe</h3>
               <p className="text-sm text-muted-foreground">
-                Envie seu link de indicacao para amigos e conhecidos
+                Envie seu link ou codigo para amigos e seguidores
               </p>
             </div>
 
             <div className="text-center space-y-3">
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-foreground">
-                <UserPlus className="h-6 w-6 text-background" />
+                <Ticket className="h-6 w-6 text-background" />
               </div>
-              <h3 className="font-semibold">2. Eles se Cadastram</h3>
+              <h3 className="font-semibold">2. Eles Ganham 20%</h3>
               <p className="text-sm text-muted-foreground">
-                Seus amigos criam conta e ativam um plano pago
+                Quem usar seu link ou codigo ganha 20% de desconto no plano
               </p>
             </div>
 
@@ -401,9 +391,19 @@ export default function ReferralPage() {
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-foreground">
                 <DollarSign className="h-6 w-6 text-background" />
               </div>
-              <h3 className="font-semibold">3. Voce Ganha</h3>
+              <h3 className="font-semibold">3. Voce Ganha 30%</h3>
               <p className="text-sm text-muted-foreground">
-                Receba sua comissao automaticamente
+                Quando assinam, voce recebe 30% do valor automaticamente
+              </p>
+            </div>
+
+            <div className="text-center space-y-3">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-foreground">
+                <Wallet className="h-6 w-6 text-background" />
+              </div>
+              <h3 className="font-semibold">4. Saque via PIX</h3>
+              <p className="text-sm text-muted-foreground">
+                Solicite seu saque via PIX quando quiser
               </p>
             </div>
           </div>
@@ -412,8 +412,7 @@ export default function ReferralPage() {
 
       {/* PIX and Withdrawal Section */}
       <div className="grid md:grid-cols-2 gap-4">
-        <Card className="relative overflow-hidden">
-          {isFreePlan && <PremiumLockOverlay onUpgrade={() => openModal(false)} />}
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CreditCard className="h-5 w-5" />
@@ -454,8 +453,7 @@ export default function ReferralPage() {
           </CardContent>
         </Card>
 
-        <Card className="relative overflow-hidden">
-          {isFreePlan && <PremiumLockOverlay onUpgrade={() => openModal(false)} />}
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <DollarSign className="h-5 w-5" />

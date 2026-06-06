@@ -26,6 +26,10 @@ interface ReferralSettings {
   commission_trimestral: number;
   commission_semestral: number;
   commission_anual: number;
+  commission_type: string;
+  commission_percentage: number;
+  discount_percentage: number;
+  allow_free_users: boolean;
   minimum_withdrawal_amount: number;
   is_active: boolean;
   share_message_whatsapp: string;
@@ -45,6 +49,10 @@ interface Commission {
   referrer_email: string;
   referred_name: string;
   referred_email: string;
+  discount_applied: number | null;
+  discount_percentage: number | null;
+  original_plan_value: number | null;
+  commission_percentage: number | null;
 }
 
 interface WithdrawalRequest {
@@ -156,6 +164,10 @@ export default function ReferralManagementPage() {
           commission_trimestral: settings.commission_trimestral,
           commission_semestral: settings.commission_semestral,
           commission_anual: settings.commission_anual,
+          commission_type: settings.commission_type,
+          commission_percentage: settings.commission_percentage,
+          discount_percentage: settings.discount_percentage,
+          allow_free_users: settings.allow_free_users,
           minimum_withdrawal_amount: settings.minimum_withdrawal_amount,
           is_active: settings.is_active,
           share_message_whatsapp: settings.share_message_whatsapp,
@@ -258,33 +270,107 @@ export default function ReferralManagementPage() {
                     />
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <div className="space-y-2">
-                      <Label>Comissao Trimestral (R$)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={settings.commission_trimestral}
-                        onChange={(e) => setSettings({ ...settings, commission_trimestral: parseFloat(e.target.value) || 0 })}
-                      />
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <Label className="text-base font-medium">Permitir Usuários Free</Label>
+                      <p className="text-sm text-muted-foreground">Usuários sem plano ativo podem participar do programa</p>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Comissão Semestral (R$)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={settings.commission_semestral}
-                        onChange={(e) => setSettings({ ...settings, commission_semestral: parseFloat(e.target.value) || 0 })}
-                      />
+                    <Switch
+                      checked={settings.allow_free_users}
+                      onCheckedChange={(checked) => setSettings({ ...settings, allow_free_users: checked })}
+                    />
+                  </div>
+
+                  <div className="border rounded-lg p-4 space-y-4">
+                    <div>
+                      <Label className="text-base font-medium">Tipo de Comissão</Label>
+                      <p className="text-sm text-muted-foreground mt-1">Escolha entre comissão fixa por plano ou percentual do valor</p>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Comissão Anual (R$)</Label>
+                    <Select
+                      value={settings.commission_type}
+                      onValueChange={(v) => setSettings({ ...settings, commission_type: v })}
+                    >
+                      <SelectTrigger className="w-[240px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="fixed">Valor Fixo por Plano</SelectItem>
+                        <SelectItem value="percentage">Percentual do Valor</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    {settings.commission_type === 'fixed' ? (
+                      <div className="grid gap-4 md:grid-cols-3">
+                        <div className="space-y-2">
+                          <Label>Comissão Trimestral (R$)</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={settings.commission_trimestral}
+                            onChange={(e) => setSettings({ ...settings, commission_trimestral: parseFloat(e.target.value) || 0 })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Comissão Semestral (R$)</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={settings.commission_semestral}
+                            onChange={(e) => setSettings({ ...settings, commission_semestral: parseFloat(e.target.value) || 0 })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Comissão Anual (R$)</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={settings.commission_anual}
+                            onChange={(e) => setSettings({ ...settings, commission_anual: parseFloat(e.target.value) || 0 })}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="space-y-2 max-w-xs">
+                          <Label>Percentual de Comissão (%)</Label>
+                          <Input
+                            type="number"
+                            step="1"
+                            min="1"
+                            max="100"
+                            value={settings.commission_percentage}
+                            onChange={(e) => setSettings({ ...settings, commission_percentage: parseFloat(e.target.value) || 0 })}
+                          />
+                          <p className="text-xs text-muted-foreground">Mínimo de R$44,70 por comissão é aplicado automaticamente</p>
+                        </div>
+                        <div className="bg-muted/50 rounded-lg p-3 space-y-1">
+                          <p className="text-xs font-medium text-muted-foreground">Previsão com {settings.commission_percentage}%:</p>
+                          <div className="grid grid-cols-3 gap-2 text-xs">
+                            <span>Trimestral (R$149): <strong>{formatCurrencyI18n(Math.max(149 * settings.commission_percentage / 100, 44.70), 'BRL', 'pt-BR')}</strong></span>
+                            <span>Semestral (R$229): <strong>{formatCurrencyI18n(Math.max(229 * settings.commission_percentage / 100, 44.70), 'BRL', 'pt-BR')}</strong></span>
+                            <span>Anual (R$336): <strong>{formatCurrencyI18n(Math.max(336 * settings.commission_percentage / 100, 44.70), 'BRL', 'pt-BR')}</strong></span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="border rounded-lg p-4 space-y-3">
+                    <div>
+                      <Label className="text-base font-medium">Desconto para Indicados</Label>
+                      <p className="text-sm text-muted-foreground mt-1">Percentual de desconto que o usuário indicado recebe na compra</p>
+                    </div>
+                    <div className="space-y-2 max-w-xs">
+                      <Label>Desconto (%)</Label>
                       <Input
                         type="number"
-                        step="0.01"
-                        value={settings.commission_anual}
-                        onChange={(e) => setSettings({ ...settings, commission_anual: parseFloat(e.target.value) || 0 })}
+                        step="1"
+                        min="0"
+                        max="100"
+                        value={settings.discount_percentage}
+                        onChange={(e) => setSettings({ ...settings, discount_percentage: parseFloat(e.target.value) || 0 })}
                       />
+                      <p className="text-xs text-muted-foreground">A comissão é calculada sobre o valor original, não sobre o valor com desconto</p>
                     </div>
                   </div>
 
@@ -302,7 +388,7 @@ export default function ReferralManagementPage() {
                     <div>
                       <Label className="text-base font-medium">Mensagens de Compartilhamento</Label>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Personalize as mensagens enviadas quando os usuarios compartilham o link de indicacao. Use <code className="bg-muted px-1 py-0.5 rounded text-xs">{'{link}'}</code> para inserir o link automaticamente.
+                        Personalize as mensagens enviadas quando os usuarios compartilham o link de indicacao. Use <code className="bg-muted px-1 py-0.5 rounded text-xs">{'{link}'}</code> para inserir o link e <code className="bg-muted px-1 py-0.5 rounded text-xs">{'{codigo}'}</code> para o cupom.
                       </p>
                     </div>
 
@@ -369,6 +455,7 @@ export default function ReferralManagementPage() {
                         <TableHead>Indicado</TableHead>
                         <TableHead>Plano</TableHead>
                         <TableHead>Valor</TableHead>
+                        <TableHead>Desconto</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Data</TableHead>
                       </TableRow>
@@ -392,7 +479,24 @@ export default function ReferralManagementPage() {
                             <Badge variant="outline" className="text-xs">{c.plan_type}</Badge>
                           </TableCell>
                           <TableCell className="font-medium">
-                            {formatCurrencyI18n(c.amount, 'BRL', 'pt-BR')}
+                            <div>
+                              <span>{formatCurrencyI18n(c.amount, 'BRL', 'pt-BR')}</span>
+                              {c.commission_percentage && (
+                                <p className="text-xs text-muted-foreground">{c.commission_percentage}%</p>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {c.discount_applied ? (
+                              <div>
+                                <span className="text-sm">{formatCurrencyI18n(c.discount_applied, 'BRL', 'pt-BR')}</span>
+                                {c.discount_percentage && (
+                                  <p className="text-xs text-muted-foreground">{c.discount_percentage}%</p>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">-</span>
+                            )}
                           </TableCell>
                           <TableCell>
                             <CommissionStatusBadge status={c.status} />

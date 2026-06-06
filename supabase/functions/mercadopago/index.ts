@@ -21,6 +21,7 @@ interface PixPaymentPayload {
   payer: PayerInfo;
   early_renewal?: boolean;
   offer_id?: string;
+  referral_code?: string;
 }
 
 interface CardPaymentPayload {
@@ -33,6 +34,7 @@ interface CardPaymentPayload {
   payer: { email: string; doc: string };
   early_renewal?: boolean;
   offer_id?: string;
+  referral_code?: string;
 }
 
 interface ResolvedDiscount {
@@ -122,6 +124,64 @@ async function resolveOfferDiscount(
     final_amount: finalAmount,
     discount_cents: discountCents,
   };
+}
+
+interface ReferralDiscountResult {
+  referrer_id: string;
+  discount_percentage: number;
+  base_amount: number;
+  final_amount: number;
+  discount_cents: number;
+}
+
+async function resolveReferralDiscount(
+  admin: ReturnType<typeof createClient>,
+  referralCode: string | undefined,
+  userId: string,
+  basePrice: number
+): Promise<ReferralDiscountResult | null> {
+  if (!referralCode) return null;
+
+  const { data: referrer } = await admin
+    .from("users")
+    .select("id, referral_code")
+    .ilike("referral_code", referralCode.trim())
+    .maybeSingle();
+
+  if (!referrer || referrer.id === userId) return null;
+
+  const { data: settings } = await admin
+    .from("referral_settings")
+    .select("discount_percentage")
+    .limit(1)
+    .maybeSingle();
+
+  const discountPct = settings?.discount_percentage ?? 20;
+  if (discountPct <= 0) return null;
+
+  const discount = Math.round(basePrice * (discountPct / 100) * 100) / 100;
+  const finalAmount = Math.max(0, Math.round((basePrice - discount) * 100) / 100);
+  const discountCents = Math.round(discount * 100);
+
+  return {
+    referrer_id: referrer.id,
+    discount_percentage: discountPct,
+    base_amount: basePrice,
+    final_amount: finalAmount,
+    discount_cents: discountCents,
+  };
+}
+
+async function saveReferredBy(
+  admin: ReturnType<typeof createClient>,
+  userId: string,
+  referrerId: string
+): Promise<void> {
+  await admin
+    .from("users")
+    .update({ referred_by: referrerId })
+    .eq("id", userId)
+    .is("referred_by", null);
 }
 
 async function getConfig(admin: ReturnType<typeof createClient>) {
@@ -302,7 +362,7 @@ Deno.serve(async (req: Request) => {
       }
 
       case "createPixPayment": {
-        const { plan_id, billing_cycle, payer, early_renewal, offer_id } =
+        const { plan_id, billing_cycle, payer, early_renewal, offer_id, referral_code } =
           payload as PixPaymentPayload;
 
         const { data: plan } = await admin
@@ -319,8 +379,9 @@ Deno.serve(async (req: Request) => {
         }
 
         const basePrice = Number(plan.price);
-        const discountInfo = await resolveOfferDiscount(admin, offer_id, user.id, basePrice);
-        const finalPrice = discountInfo ? discountInfo.final_amount : basePrice;
+        const referralInfo = await resolveReferralDiscount(admin, referral_code, user.id, basePrice);
+        const discountInfo = referralInfo ? null : await resolveOfferDiscount(admin, offer_id, user.id, basePrice);
+        const finalPrice = referralInfo ? referralInfo.final_amount : (discountInfo ? discountInfo.final_amount : basePrice);
         const amountCents = Math.round(finalPrice * 100);
         const config = await getConfig(admin);
         const accessToken = getAccessToken(config);
@@ -339,13 +400,17 @@ Deno.serve(async (req: Request) => {
             early_renewal: early_renewal ?? false,
             offer_id: discountInfo?.offer_id ?? null,
             coupon_id: discountInfo?.coupon_id ?? null,
-            discount_cents: discountInfo?.discount_cents ?? 0,
+            discount_cents: referralInfo ? referralInfo.discount_cents : (discountInfo?.discount_cents ?? 0),
           })
           .select("id")
           .single();
 
         if (insertErr || !paymentRow) {
           throw new Error("Erro ao registrar pagamento");
+        }
+
+        if (referralInfo) {
+          await saveReferredBy(admin, user.id, referralInfo.referrer_id);
         }
 
         const docType = payer.doc.replace(/\D/g, "").length > 11 ? "CNPJ" : "CPF";
@@ -441,6 +506,7 @@ Deno.serve(async (req: Request) => {
           payer: cardPayer,
           early_renewal,
           offer_id,
+          referral_code,
         } = payload as CardPaymentPayload;
 
         const { data: plan } = await admin
@@ -457,8 +523,9 @@ Deno.serve(async (req: Request) => {
         }
 
         const basePrice = Number(plan.price);
-        const discountInfo = await resolveOfferDiscount(admin, offer_id, user.id, basePrice);
-        const finalPrice = discountInfo ? discountInfo.final_amount : basePrice;
+        const referralInfo = await resolveReferralDiscount(admin, referral_code, user.id, basePrice);
+        const discountInfo = referralInfo ? null : await resolveOfferDiscount(admin, offer_id, user.id, basePrice);
+        const finalPrice = referralInfo ? referralInfo.final_amount : (discountInfo ? discountInfo.final_amount : basePrice);
         const amountCents = Math.round(finalPrice * 100);
         const config = await getConfig(admin);
         const accessToken = getAccessToken(config);
@@ -478,13 +545,17 @@ Deno.serve(async (req: Request) => {
             early_renewal: early_renewal ?? false,
             offer_id: discountInfo?.offer_id ?? null,
             coupon_id: discountInfo?.coupon_id ?? null,
-            discount_cents: discountInfo?.discount_cents ?? 0,
+            discount_cents: referralInfo ? referralInfo.discount_cents : (discountInfo?.discount_cents ?? 0),
           })
           .select("id")
           .single();
 
         if (insertErr || !paymentRow) {
           throw new Error("Erro ao registrar pagamento");
+        }
+
+        if (referralInfo) {
+          await saveReferredBy(admin, user.id, referralInfo.referrer_id);
         }
 
         const docType =

@@ -76,6 +76,12 @@ export function PromotionalOffersProvider({ children }: { children: React.ReactN
   const loadEligibleOffers = useCallback(async () => {
     if (!user || user.role === 'admin') return;
 
+    // Referred users cannot receive promotional offers
+    if (user.referred_by) {
+      setOfferQueue([]);
+      return;
+    }
+
     try {
       const offers = await fetchUserEligibleOffers(user.id);
       if (offers.length === 0) {

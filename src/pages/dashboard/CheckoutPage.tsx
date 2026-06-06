@@ -17,8 +17,9 @@ import {
   calculateDiscountedPrice,
   type OfferCheckoutInfo,
 } from '@/lib/offerService';
+import { validateReferralCoupon, calculateReferralDiscount } from '@/lib/referralUtils';
 import { toast } from 'sonner';
-import { QrCode, CreditCard, Copy, Check, Loader as Loader2, ArrowLeft, ShieldCheck, Clock, CircleCheck as CheckCircle2, Circle as XCircle, CircleAlert as AlertCircle, CalendarClock, Tag } from 'lucide-react';
+import { QrCode, CreditCard, Copy, Check, Loader as Loader2, ArrowLeft, ShieldCheck, Clock, CircleCheck as CheckCircle2, Circle as XCircle, CircleAlert as AlertCircle, CalendarClock, Tag, Ticket, Lock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,7 +62,7 @@ function formatCpf(value: string): string {
     .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
 }
 
-function PixSection({ plan, onSuccess, earlyRenewal, offerContext }: { plan: PlanInfo; onSuccess: () => void; earlyRenewal?: boolean; offerContext?: OfferContext | null }) {
+function PixSection({ plan, onSuccess, earlyRenewal, offerContext, referralCode }: { plan: PlanInfo; onSuccess: () => void; earlyRenewal?: boolean; offerContext?: OfferContext | null; referralCode?: string }) {
   const { user } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -151,6 +152,7 @@ function PixSection({ plan, onSuccess, earlyRenewal, offerContext }: { plan: Pla
         },
         early_renewal: earlyRenewal,
         offer_id: offerContext?.offer_id,
+        referral_code: referralCode,
       });
       setPixResult(result);
       startPolling(result.payment_id);
@@ -308,9 +310,10 @@ interface CardSectionProps {
   onSuccess: () => void;
   earlyRenewal?: boolean;
   offerContext?: OfferContext | null;
+  referralCode?: string;
 }
 
-function CardSection({ plan, onSuccess, earlyRenewal, offerContext }: CardSectionProps) {
+function CardSection({ plan, onSuccess, earlyRenewal, offerContext, referralCode }: CardSectionProps) {
   const [result, setResult] = useState<CardPaymentResult | null>(null);
   const [brickReady, setBrickReady] = useState(false);
   const planRef = useRef(plan);
@@ -321,6 +324,8 @@ function CardSection({ plan, onSuccess, earlyRenewal, offerContext }: CardSectio
   earlyRenewalRef.current = earlyRenewal;
   const offerIdRef = useRef(offerContext?.offer_id);
   offerIdRef.current = offerContext?.offer_id;
+  const referralCodeRef = useRef(referralCode);
+  referralCodeRef.current = referralCode;
 
   const handleSubmit = useCallback(async (formData: any) => {
     return new Promise<void>(async (resolve, reject) => {
@@ -339,6 +344,7 @@ function CardSection({ plan, onSuccess, earlyRenewal, offerContext }: CardSectio
           },
           early_renewal: earlyRenewalRef.current,
           offer_id: offerIdRef.current,
+          referral_code: referralCodeRef.current,
         });
         setResult(cardResult);
         if (cardResult.status === 'approved') {
@@ -471,6 +477,15 @@ export default function CheckoutPage() {
   const [offerContext, setOfferContext] = useState<OfferContext | null>(null);
   const [offerLoading, setOfferLoading] = useState(false);
 
+  // Referral coupon state
+  const [referralInput, setReferralInput] = useState('');
+  const [referralValidated, setReferralValidated] = useState(false);
+  const [referralLocked, setReferralLocked] = useState(false);
+  const [referralValidating, setReferralValidating] = useState(false);
+  const [referralError, setReferralError] = useState('');
+  const [referralDiscount, setReferralDiscount] = useState<{ discount: number; finalPrice: number } | null>(null);
+  const [validatedReferralCode, setValidatedReferralCode] = useState<string | undefined>(undefined);
+
   const planId = searchParams.get('plan');
   const cycle = searchParams.get('cycle');
   const earlyRenewal = searchParams.get('early_renewal') === 'true';
@@ -565,6 +580,100 @@ export default function CheckoutPage() {
     return () => { cancelled = true; };
   }, [offerId, user?.id, plan]);
 
+  // Auto-detect referral: check user's referred_by or URL/localStorage ref code
+  useEffect(() => {
+    if (!user?.id || !plan) return;
+    let cancelled = false;
+
+    const checkReferral = async () => {
+      // Check if user already has referred_by set
+      const { data: userData } = await supabase
+        .from('users')
+        .select('referred_by')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (userData?.referred_by) {
+        // User was already referred - find the referrer's code
+        const { data: referrer } = await supabase
+          .from('users')
+          .select('referral_code')
+          .eq('id', userData.referred_by)
+          .maybeSingle();
+
+        if (cancelled) return;
+        if (referrer?.referral_code) {
+          setReferralInput(referrer.referral_code);
+          setReferralLocked(true);
+          setReferralValidated(true);
+          setValidatedReferralCode(referrer.referral_code);
+          // Get discount percentage from settings
+          const { data: settings } = await supabase
+            .from('referral_settings')
+            .select('discount_percentage')
+            .limit(1)
+            .maybeSingle();
+          const pct = settings?.discount_percentage ?? 20;
+          setReferralDiscount(calculateReferralDiscount(plan.price, pct));
+        }
+        return;
+      }
+
+      // Check URL param or localStorage
+      const refFromUrl = new URLSearchParams(window.location.search).get('ref');
+      const refFromStorage = localStorage.getItem('vitrineturbo_ref_code');
+      const refCode = refFromUrl || refFromStorage;
+
+      if (refCode && !cancelled) {
+        setReferralInput(refCode);
+        setReferralLocked(true);
+        // Auto-validate
+        const result = await validateReferralCoupon(refCode, user.id);
+        if (cancelled) return;
+        if (result.valid) {
+          setReferralValidated(true);
+          setValidatedReferralCode(refCode);
+          const { data: settings } = await supabase
+            .from('referral_settings')
+            .select('discount_percentage')
+            .limit(1)
+            .maybeSingle();
+          const pct = settings?.discount_percentage ?? 20;
+          setReferralDiscount(calculateReferralDiscount(plan.price, pct));
+        }
+      }
+    };
+
+    checkReferral();
+    return () => { cancelled = true; };
+  }, [user?.id, plan]);
+
+  const handleApplyReferral = async () => {
+    if (!user?.id || !plan) return;
+    setReferralError('');
+    setReferralValidating(true);
+
+    const result = await validateReferralCoupon(referralInput, user.id);
+
+    if (result.valid) {
+      setReferralValidated(true);
+      setValidatedReferralCode(referralInput.trim().toUpperCase());
+      const { data: settings } = await supabase
+        .from('referral_settings')
+        .select('discount_percentage')
+        .limit(1)
+        .maybeSingle();
+      const pct = settings?.discount_percentage ?? 20;
+      setReferralDiscount(calculateReferralDiscount(plan.price, pct));
+      toast.success('Cupom aplicado! 20% de desconto ativado');
+    } else {
+      setReferralError(result.error || 'Cupom invalido');
+    }
+    setReferralValidating(false);
+  };
+
   useEffect(() => {
     let cancelled = false;
 
@@ -611,8 +720,31 @@ export default function CheckoutPage() {
     if (plan) {
       trackPurchase(plan.name, plan.price, user?.email);
     }
+    // Save referred_by if coupon was used and user doesn't already have it
+    if (validatedReferralCode && user?.id) {
+      const { data: currentUser } = await supabase
+        .from('users')
+        .select('referred_by')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (!currentUser?.referred_by) {
+        const { data: referrer } = await supabase
+          .from('users')
+          .select('id')
+          .ilike('referral_code', validatedReferralCode)
+          .maybeSingle();
+
+        if (referrer) {
+          await supabase
+            .from('users')
+            .update({ referred_by: referrer.id })
+            .eq('id', user.id);
+        }
+      }
+    }
     await refreshUser();
-  }, [refreshUser, plan, user?.email]);
+  }, [refreshUser, plan, user?.email, user?.id, validatedReferralCode]);
 
   if (planLoading || !plan) {
     return (
@@ -655,10 +787,17 @@ export default function CheckoutPage() {
         plan={plan}
         onSuccess={handleSuccess}
         earlyRenewal={earlyRenewal}
-        offerContext={offerContext}
+        offerContext={effectiveOfferContext}
+        referralCode={validatedReferralCode}
       />
     );
   };
+
+  // Referral discount takes priority over promotional offers
+  const effectiveOfferContext = referralDiscount ? null : offerContext;
+  const effectivePrice = referralDiscount
+    ? referralDiscount.finalPrice
+    : (effectiveOfferContext?.final_price ?? plan.price);
 
   return (
     <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
@@ -681,13 +820,13 @@ export default function CheckoutPage() {
                 <p className="text-sm text-muted-foreground">Ciclo: {plan.duration}</p>
               </div>
               <div className="text-right">
-                {offerContext ? (
+                {(referralDiscount || effectiveOfferContext) ? (
                   <>
                     <p className="text-xs line-through text-muted-foreground">
-                      {formatCurrencyI18n(offerContext.base_price)}
+                      {formatCurrencyI18n(plan.price)}
                     </p>
                     <p className="text-2xl font-bold text-emerald-600">
-                      {formatCurrencyI18n(offerContext.final_price)}
+                      {formatCurrencyI18n(effectivePrice)}
                     </p>
                   </>
                 ) : (
@@ -707,16 +846,71 @@ export default function CheckoutPage() {
           </div>
         )}
 
-        {offerContext && (
+        {/* Referral discount banner */}
+        {referralDiscount && referralValidated && (
+          <div className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50/60 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300">
+            <Ticket className="h-4 w-4 mt-0.5 shrink-0" />
+            <div className="flex-1">
+              <p className="font-medium">Voce ganhou 20% de desconto por indicacao!</p>
+              <p className="text-xs mt-0.5 opacity-80">
+                Voce economiza {formatCurrencyI18n(referralDiscount.discount)}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Promotional offer banner (only shows if no referral discount) */}
+        {effectiveOfferContext && !referralDiscount && (
           <div className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50/60 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300">
             <Tag className="h-4 w-4 mt-0.5 shrink-0" />
             <div className="flex-1">
-              <p className="font-medium">{offerContext.description}</p>
+              <p className="font-medium">{effectiveOfferContext.description}</p>
               <p className="text-xs mt-0.5 opacity-80">
-                Voce economiza {formatCurrencyI18n(offerContext.discount)}
-                {offerContext.coupon_code && ` - cupom ${offerContext.coupon_code}`}
+                Voce economiza {formatCurrencyI18n(effectiveOfferContext.discount)}
+                {effectiveOfferContext.coupon_code && ` - cupom ${effectiveOfferContext.coupon_code}`}
               </p>
             </div>
+          </div>
+        )}
+
+        {/* Referral Coupon Field */}
+        {!referralValidated && (
+          <Card>
+            <CardContent className="p-4 space-y-3">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Ticket className="h-4 w-4" />
+                Tem um cupom de indicacao?
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  value={referralInput}
+                  onChange={(e) => { setReferralInput(e.target.value.toUpperCase()); setReferralError(''); }}
+                  placeholder="Ex: VT3K8MX"
+                  className="font-mono"
+                  readOnly={referralLocked}
+                  disabled={referralValidating}
+                />
+                <Button
+                  onClick={handleApplyReferral}
+                  disabled={!referralInput.trim() || referralValidating}
+                  variant="outline"
+                  className="shrink-0"
+                >
+                  {referralValidating ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Aplicar'}
+                </Button>
+              </div>
+              {referralError && (
+                <p className="text-xs text-destructive">{referralError}</p>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Referral validated badge */}
+        {referralValidated && (
+          <div className="flex items-center gap-2 px-1">
+            <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Cupom de indicacao <strong>{referralInput}</strong> aplicado</span>
           </div>
         )}
 
@@ -774,7 +968,7 @@ export default function CheckoutPage() {
               <Separator />
 
               {activeTab === 'pix' ? (
-                <PixSection plan={plan} onSuccess={handleSuccess} earlyRenewal={earlyRenewal} offerContext={offerContext} />
+                <PixSection plan={plan} onSuccess={handleSuccess} earlyRenewal={earlyRenewal} offerContext={effectiveOfferContext} referralCode={validatedReferralCode} />
               ) : (
                 renderCardContent()
               )}
