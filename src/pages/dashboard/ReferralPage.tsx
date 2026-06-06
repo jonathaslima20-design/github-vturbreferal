@@ -209,9 +209,6 @@ export default function ReferralPage() {
               Copiar
             </Button>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Compartilhe este código e quem usá-lo no checkout ganha 20% de desconto. Você ganha 30% de comissão automaticamente.
-          </p>
         </CardContent>
       </Card>
 
