@@ -40,7 +40,7 @@ function getPlanBadge(planStatus: string) {
     case 'active':
       return <Badge>Ativo</Badge>;
     case 'free':
-      return <Badge variant="secondary">Gratis</Badge>;
+      return <Badge variant="secondary">Grátis</Badge>;
     case 'expired':
       return <Badge variant="destructive">Expirado</Badge>;
     default:
@@ -73,10 +73,10 @@ export default function ReferralPage() {
     try {
       await navigator.clipboard.writeText(referralCode);
       setCopiedCode(true);
-      toast.success('Codigo copiado!');
+      toast.success('Código copiado!');
       setTimeout(() => setCopiedCode(false), 2000);
     } catch {
-      toast.error('Erro ao copiar codigo');
+      toast.error('Erro ao copiar código');
     }
   };
 
@@ -103,7 +103,7 @@ export default function ReferralPage() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            {error || 'Nao foi possivel gerar seu link de indicacao. Por favor, recarregue a pagina.'}
+            {error || 'Não foi possível gerar seu link de indicação. Por favor, recarregue a página.'}
           </AlertDescription>
         </Alert>
         <Button onClick={refreshData} className="w-full max-w-md mx-auto block">
@@ -124,12 +124,12 @@ export default function ReferralPage() {
         <div className="text-center space-y-3 py-6">
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Indique e Ganhe</h1>
           <p className="text-muted-foreground max-w-lg mx-auto">
-            Compartilhe o VitrineTurbo e ganhe comissões por cada indicacao
+            Compartilhe o VitrineTurbo e ganhe comissões por cada indicação
           </p>
           <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
             <Badge variant="secondary" className="text-xs sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1">
               <DollarSign className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1" />
-              Voce ganha 30%
+              Você ganha 30%
             </Badge>
             <Badge variant="outline" className="text-xs sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1">
               <Ticket className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1" />
@@ -144,13 +144,13 @@ export default function ReferralPage() {
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Share2 className="h-4 w-4" />
-                Seu Link de Indicacao
+                Seu Link de Indicação
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
                   </TooltipTrigger>
                   <TooltipContent side="top" className="max-w-[220px]">
-                    <p>Tambem presente no logo VitrineTurbo no rodape do seu catalogo</p>
+                    <p>Também presente no logo VitrineTurbo no rodapé do seu catálogo</p>
                   </TooltipContent>
                 </Tooltip>
               </CardTitle>
@@ -224,9 +224,9 @@ export default function ReferralPage() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { num: '1', icon: Share2, label: 'Compartilhe', desc: 'Envie link ou codigo' },
+              { num: '1', icon: Share2, label: 'Compartilhe', desc: 'Envie link ou código' },
               { num: '2', icon: Ticket, label: 'Desconto 20%', desc: 'Indicado ganha desconto' },
-              { num: '3', icon: DollarSign, label: 'Comissao 30%', desc: 'Voce recebe ao assinarem' },
+              { num: '3', icon: DollarSign, label: 'Comissão 30%', desc: 'Você recebe ao assinarem' },
               { num: '4', icon: Wallet, label: 'Saque PIX', desc: 'Retire quando quiser' },
             ].map((step) => (
               <div key={step.num} className="flex flex-col items-center text-center gap-2">
@@ -242,7 +242,7 @@ export default function ReferralPage() {
 
         {/* Commission Reward Tiers */}
         <div>
-          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-4">Sua comissao por plano</h2>
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-4">Sua comissão por plano</h2>
           <div className="grid md:grid-cols-3 gap-4">
             <Card className="transition-all duration-200 hover:shadow-md">
               <CardContent className="pt-5 pb-5 text-center space-y-1.5">
@@ -277,7 +277,7 @@ export default function ReferralPage() {
         <section className="space-y-6">
           <div className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-muted-foreground" />
-            <h2 className="text-lg font-semibold">Minhas Metricas</h2>
+            <h2 className="text-lg font-semibold">Minhas Métricas</h2>
           </div>
 
           {/* Stats Cards */}
@@ -307,7 +307,7 @@ export default function ReferralPage() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-medium">Comissoes Totais</CardTitle>
+                <CardTitle className="text-xs font-medium">Comissões Totais</CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -317,7 +317,7 @@ export default function ReferralPage() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-medium">Disponivel p/ Saque</CardTitle>
+                <CardTitle className="text-xs font-medium">Disponível p/ Saque</CardTitle>
                 <Wallet className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -438,14 +438,14 @@ export default function ReferralPage() {
                   <div className="text-3xl font-bold">
                     {formatCurrencyI18n(available, 'BRL', 'pt-BR')}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">Disponivel para saque</p>
+                  <p className="text-xs text-muted-foreground mt-1">Disponível para saque</p>
                 </div>
 
                 {available < withdrawalMin && (
                   <div className="space-y-1.5">
                     <Progress value={withdrawalProgress} className="h-2" />
                     <p className="text-xs text-muted-foreground text-center">
-                      Faltam {formatCurrencyI18n(withdrawalMin - available, 'BRL', 'pt-BR')} para o minimo de R$ 50,00
+                      Faltam {formatCurrencyI18n(withdrawalMin - available, 'BRL', 'pt-BR')} para o mínimo de R$ 50,00
                     </p>
                   </div>
                 )}
@@ -482,7 +482,7 @@ export default function ReferralPage() {
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <FileText className="h-4 w-4" />
-            Termos e Condicoes do Programa de Indicacoes
+            Termos e Condições do Programa de Indicações
           </Link>
         </div>
 
