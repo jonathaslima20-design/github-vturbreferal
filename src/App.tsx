@@ -78,6 +78,7 @@ import LegalCenterPage from '@/pages/admin/LegalCenterPage.tsx';
 import PrivacyRequestsPage from '@/pages/admin/PrivacyRequestsPage.tsx';
 import LandingHeroPage from '@/pages/admin/LandingHeroPage.tsx';
 import SystemAppearancePage from '@/pages/admin/SystemAppearancePage.tsx';
+import LinkPreviewPage from '@/pages/admin/LinkPreviewPage.tsx';
 import OffersManagementPage from '@/pages/admin/OffersManagementPage.tsx';
 import OfferEditorPage from '@/pages/admin/OfferEditorPage.tsx';
 import OfferAnalyticsPage from '@/pages/admin/OfferAnalyticsPage.tsx';
@@ -253,6 +254,7 @@ function AppContent() {
             <Route path="/admin/privacy-requests" element={<PrivacyRequestsPage />} />
             <Route path="/admin/landing-hero" element={<LandingHeroPage />} />
             <Route path="/admin/system-appearance" element={<SystemAppearancePage />} />
+            <Route path="/admin/link-previews" element={<LinkPreviewPage />} />
             <Route path="/admin/offers" element={<OffersManagementPage />} />
             <Route path="/admin/offers/new" element={<OfferEditorPage />} />
             <Route path="/admin/offers/:offerId" element={<OfferEditorPage />} />

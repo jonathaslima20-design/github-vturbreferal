@@ -222,6 +222,78 @@ function generateProductMetaTagsHTML(product: ProductProfile, profile: UserProfi
 </html>`;
 }
 
+interface LinkPreviewConfig {
+  page_type: string;
+  og_title: string;
+  og_description: string;
+  og_image_url: string;
+  og_site_name: string;
+  og_type: string;
+  twitter_card_type: string;
+  is_active: boolean;
+}
+
+async function fetchLinkPreviewConfig(
+  supabaseUrl: string,
+  supabaseKey: string,
+  pageType: string
+): Promise<LinkPreviewConfig | null> {
+  try {
+    const response = await fetch(
+      `${supabaseUrl}/rest/v1/link_preview_configs?page_type=eq.${pageType}&is_active=eq.true&select=page_type,og_title,og_description,og_image_url,og_site_name,og_type,twitter_card_type,is_active&limit=1`,
+      {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.length > 0 ? data[0] : null;
+  } catch {
+    return null;
+  }
+}
+
+function generateConfigBasedHTML(config: LinkPreviewConfig, canonicalUrl: string): string {
+  const title = config.og_title;
+  const description = config.og_description;
+  const imageUrl = config.og_image_url || 'https://ikvwygqmlqhsyqmpgaoz.supabase.co/storage/v1/object/public/public/logos/flat-icon-vitrine.png';
+  const siteName = config.og_site_name || 'VitrineTurbo';
+
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${title}</title>
+    <meta name="title" content="${title}" />
+    <meta name="description" content="${description}" />
+    <meta property="og:type" content="${config.og_type}" />
+    <meta property="og:url" content="${canonicalUrl}" />
+    <meta property="og:title" content="${title}" />
+    <meta property="og:description" content="${description}" />
+    <meta property="og:image" content="${imageUrl}" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="${siteName}" />
+    <meta name="twitter:card" content="${config.twitter_card_type}" />
+    <meta name="twitter:url" content="${canonicalUrl}" />
+    <meta name="twitter:title" content="${title}" />
+    <meta name="twitter:description" content="${description}" />
+    <meta name="twitter:image" content="${imageUrl}" />
+    <meta property="og:image:alt" content="${title}" />
+    <meta http-equiv="refresh" content="0;url=${canonicalUrl}" />
+  </head>
+  <body>
+    <h1>${title}</h1>
+    <p>${description}</p>
+  </body>
+</html>`;
+}
+
 /**
  * Default meta tags HTML for non-specific pages
  */
@@ -366,7 +438,57 @@ export default async (request: Request, context: Context) => {
     // Parse the URL to extract the slug (standard vitrineturbo.com flow)
     const pathSegments = url.pathname.split('/').filter(Boolean);
 
-    // Skip special paths
+    // Check for referral link: /?ref=CODE
+    const refCode = url.searchParams.get('ref');
+    if (refCode && pathSegments.length === 0 && supabaseUrl && supabaseKey) {
+      console.log('🎁 Referral link detected:', refCode);
+      const config = await fetchLinkPreviewConfig(supabaseUrl, supabaseKey, 'referral');
+      if (config) {
+        // Look up referrer name
+        let referrerName = '';
+        const referrerRes = await fetch(
+          `${supabaseUrl}/rest/v1/users?referral_code=ilike.${encodeURIComponent(refCode)}&select=name&limit=1`,
+          {
+            headers: {
+              'apikey': supabaseKey,
+              'Authorization': `Bearer ${supabaseKey}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        if (referrerRes.ok) {
+          const referrers = await referrerRes.json();
+          if (referrers.length > 0) referrerName = referrers[0].name || '';
+        }
+
+        config.og_title = config.og_title
+          .replace('{nome_indicador}', referrerName || 'Um amigo')
+          .replace('{codigo}', refCode);
+        config.og_description = config.og_description
+          .replace('{nome_indicador}', referrerName || 'Um amigo')
+          .replace('{codigo}', refCode);
+
+        const html = generateConfigBasedHTML(config, request.url);
+        return new Response(html, {
+          status: 200,
+          headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300, s-maxage=600' },
+        });
+      }
+    }
+
+    // Handle help center
+    if (pathSegments.length > 0 && pathSegments[0] === 'help' && supabaseUrl && supabaseKey) {
+      const config = await fetchLinkPreviewConfig(supabaseUrl, supabaseKey, 'help_center');
+      if (config) {
+        const html = generateConfigBasedHTML(config, request.url);
+        return new Response(html, {
+          status: 200,
+          headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300, s-maxage=600' },
+        });
+      }
+    }
+
+    // Skip special paths (return landing config or default)
     if (pathSegments.length === 0 ||
         pathSegments[0] === 'login' ||
         pathSegments[0] === 'register' ||
@@ -374,7 +496,17 @@ export default async (request: Request, context: Context) => {
         pathSegments[0] === 'admin' ||
         pathSegments[0] === 'help' ||
         pathSegments[0] === 'assets') {
-      console.log('📄 Special path, returning default');
+      console.log('📄 Special path, returning landing/default');
+      if (supabaseUrl && supabaseKey) {
+        const config = await fetchLinkPreviewConfig(supabaseUrl, supabaseKey, 'landing');
+        if (config) {
+          const html = generateConfigBasedHTML(config, request.url);
+          return new Response(html, {
+            status: 200,
+            headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' },
+          });
+        }
+      }
       return new Response(generateDefaultMetaTagsHTML(), {
         status: 200,
         headers: {
