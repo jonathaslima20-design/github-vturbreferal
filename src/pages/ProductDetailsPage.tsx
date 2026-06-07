@@ -82,7 +82,8 @@ export default function ProductDetailsPage({ customDomainSlug }: ProductDetailsP
               url,
               is_featured,
               media_type,
-              display_order
+              display_order,
+              associated_color
             )
           `)
           .eq('id', productId)

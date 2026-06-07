@@ -140,7 +140,12 @@ export function useProductData({
           has_weight_variants,
           min_variant_price,
           max_variant_price,
-          external_checkout_url
+          external_checkout_url,
+          product_images (
+            id,
+            url,
+            associated_color
+          )
         `)
         .eq('user_id', userId)
         .eq('is_visible_on_storefront', true)
