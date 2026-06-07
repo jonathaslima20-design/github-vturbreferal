@@ -438,7 +438,7 @@ export default function ProductVariantModal({
           <div className="flex gap-4">
             <div className="w-20 h-20 bg-white rounded-lg overflow-hidden border border-gray-200 shadow-sm flex-shrink-0">
               <img
-                src={product.featured_image_url || 'https://images.pexels.com/photos/3802510/pexels-photo-3802510.jpeg'}
+                src={(selectedColor && product.product_images?.find((img) => img.associated_color === selectedColor)?.url) || product.featured_image_url || 'https://images.pexels.com/photos/3802510/pexels-photo-3802510.jpeg'}
                 alt={product.title}
                 className="w-full h-full object-cover"
               />
