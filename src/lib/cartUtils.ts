@@ -1,19 +1,21 @@
 import type { CartItem, CartDistribution, AppliedCoupon } from '@/types';
 import { formatCurrencyI18n, generateWhatsAppMessage, type SupportedLanguage, type SupportedCurrency } from '@/lib/i18n';
 
-function getProductUrl(productId: string, corretorSlug: string): string {
-  if (typeof window === 'undefined') return `https://vitrineturbo.com/${corretorSlug}/produtos/${productId}`;
+function getProductUrl(productId: string, corretorSlug: string, color?: string): string {
+  const colorParam = color ? `?cor=${encodeURIComponent(color)}` : '';
+
+  if (typeof window === 'undefined') return `https://vitrineturbo.com/${corretorSlug}/produtos/${productId}${colorParam}`;
 
   const hostname = window.location.hostname;
   const isMainDomain = hostname === 'vitrineturbo.com' || hostname.includes('netlify.app') || hostname.includes('vercel.app');
   const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
 
   if (isMainDomain) {
-    return `https://vitrineturbo.com/${corretorSlug}/produtos/${productId}`;
+    return `https://vitrineturbo.com/${corretorSlug}/produtos/${productId}${colorParam}`;
   } else if (isLocalhost) {
-    return `${window.location.origin}/${corretorSlug}/produtos/${productId}`;
+    return `${window.location.origin}/${corretorSlug}/produtos/${productId}${colorParam}`;
   } else {
-    return `${window.location.origin}/produtos/${productId}`;
+    return `${window.location.origin}/produtos/${productId}${colorParam}`;
   }
 }
 
@@ -175,7 +177,7 @@ export function generateCartOrderMessage(
     // Add product link for easy access to full details
     if (corretorSlug) {
       try {
-        orderMessage += `${getProductUrl(item.id, corretorSlug)}\n`;
+        orderMessage += `${getProductUrl(item.id, corretorSlug, item.selectedColor)}\n`;
       } catch {
         orderMessage += `Ver produto\n`;
       }
