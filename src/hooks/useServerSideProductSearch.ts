@@ -72,7 +72,12 @@ export function useServerSideProductSearch(): UseServerSideProductSearchReturn {
           has_tiered_pricing,
           min_tiered_price,
           max_tiered_price,
-          is_visible_on_storefront
+          is_visible_on_storefront,
+          product_images (
+            id,
+            url,
+            associated_color
+          )
         `)
         .eq('user_id', userId)
         .eq('is_visible_on_storefront', true);
