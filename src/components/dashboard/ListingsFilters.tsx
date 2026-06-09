@@ -33,6 +33,7 @@ const STATUS_OPTIONS = [
 ];
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+  { value: 'display_order', label: 'Ordem personalizada' },
   { value: 'recent', label: 'Mais recentes' },
   { value: 'oldest', label: 'Mais antigos' },
   { value: 'price_high', label: 'Maior preço' },

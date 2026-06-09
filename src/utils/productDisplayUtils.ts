@@ -88,7 +88,12 @@ export function groupProductsByCategory(
     });
 
     sortedCategories.forEach(categoryName => {
-      orderedGrouped[categoryName] = grouped[categoryName];
+      orderedGrouped[categoryName] = grouped[categoryName].sort((a, b) => {
+        const orderA = a.display_order ?? 999999;
+        const orderB = b.display_order ?? 999999;
+        if (orderA !== orderB) return orderA - orderB;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
     });
 
     return orderedGrouped;
@@ -116,6 +121,15 @@ export function groupProductsByCategory(
   if (grouped[othersLabel]) {
     orderedGrouped[othersLabel] = grouped[othersLabel];
   }
+
+  Object.keys(orderedGrouped).forEach(category => {
+    orderedGrouped[category].sort((a, b) => {
+      const orderA = a.display_order ?? 999999;
+      const orderB = b.display_order ?? 999999;
+      if (orderA !== orderB) return orderA - orderB;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+  });
 
   return orderedGrouped;
 }

@@ -97,6 +97,7 @@ export default function ListingsPage() {
     handleBulkDelete,
     handleBulkImageCompression,
     handleDragEnd,
+    initializeCategoryDisplayOrder,
     refreshProducts,
     loadNextCategory,
     loadAllCategories,
@@ -148,6 +149,13 @@ export default function ListingsPage() {
         return sorted.sort((a, b) => (a.stock_quantity ?? 999) - (b.stock_quantity ?? 999));
       case 'alpha':
         return sorted.sort((a, b) => a.title.localeCompare(b.title));
+      case 'display_order':
+        return sorted.sort((a, b) => {
+          const orderA = a.display_order ?? 999999;
+          const orderB = b.display_order ?? 999999;
+          if (orderA !== orderB) return orderA - orderB;
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
       default:
         return sorted;
     }
@@ -324,7 +332,14 @@ export default function ListingsPage() {
               reordering={reordering}
               totalProducts={products.length}
               viewMode={viewMode}
-              onToggleReorderMode={() => setIsReorderModeActive(!isReorderModeActive)}
+              onToggleReorderMode={() => {
+                const entering = !isReorderModeActive;
+                setIsReorderModeActive(entering);
+                if (entering) {
+                  setSortOption('display_order');
+                  initializeCategoryDisplayOrder();
+                }
+              }}
               onViewModeChange={setViewMode}
               onExport={handleExport}
               onImport={() => setShowImportDialog(true)}

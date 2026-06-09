@@ -52,6 +52,7 @@ interface UseProductListManagementReturn {
   handleBulkDelete: () => Promise<void>;
   handleBulkImageCompression: () => Promise<void>;
   handleDragEnd: (result: any) => Promise<void>;
+  initializeCategoryDisplayOrder: () => Promise<void>;
   refreshProducts: () => Promise<void>;
   loadNextCategory: () => void;
   loadAllCategories: () => void;
@@ -804,6 +805,44 @@ export function useProductListManagement({ userId }: UseProductListManagementPro
     }
   };
 
+  const initializeCategoryDisplayOrder = async () => {
+    if (!userId || filteredProducts.length === 0) return;
+
+    const allUninitialized = filteredProducts.every(
+      p => p.display_order === null || p.display_order === 0
+    );
+
+    if (!allUninitialized) return;
+
+    const sorted = [...filteredProducts].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+
+    const updatePromises = sorted.map((product, index) =>
+      supabase
+        .from('products')
+        .update({ display_order: index })
+        .eq('id', product.id)
+        .eq('user_id', userId)
+    );
+
+    const results = await Promise.allSettled(
+      updatePromises.map(p => db.retry(() => p))
+    );
+    const failures = results.filter(r => r.status === 'rejected');
+
+    if (failures.length === 0) {
+      const updated = sorted.map((p, i) => ({ ...p, display_order: i }));
+      setFilteredProducts(updated);
+      setProducts(prev =>
+        prev.map(p => {
+          const idx = sorted.findIndex(s => s.id === p.id);
+          return idx >= 0 ? { ...p, display_order: idx } : p;
+        })
+      );
+    }
+  };
+
   // Enhanced refresh function
   const refreshProducts = async () => {
     setLoading(true);
@@ -896,6 +935,7 @@ export function useProductListManagement({ userId }: UseProductListManagementPro
     handleBulkDelete,
     handleBulkImageCompression,
     handleDragEnd,
+    initializeCategoryDisplayOrder,
     refreshProducts,
     loadNextCategory,
     loadAllCategories,

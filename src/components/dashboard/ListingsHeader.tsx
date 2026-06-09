@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 
 export type ViewMode = 'grid' | 'list';
-export type SortOption = 'recent' | 'oldest' | 'price_high' | 'price_low' | 'most_viewed' | 'low_stock' | 'alpha';
+export type SortOption = 'recent' | 'oldest' | 'price_high' | 'price_low' | 'most_viewed' | 'low_stock' | 'alpha' | 'display_order';
 
 interface ListingsHeaderProps {
   canReorder: boolean;
